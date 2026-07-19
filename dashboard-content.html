@@ -21,30 +21,47 @@
             background-color: var(--bg-color); 
             background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 100% 100%, hsla(225,39%,20%,0.3) 0, transparent 50%);
             color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0; padding: clamp(10px, 2vw, 30px); box-sizing: border-box; height: 100vh; overflow: hidden;
-            position: relative;
+            margin: 0; padding: clamp(10px, 2vw, 20px); box-sizing: border-box; height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column; gap: 15px;
         }
         
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(15px, 3vw, 30px); height: 100%; }
+        /* --- NEW TOP BAR (Clock & Weather) --- */
+        .top-bar {
+            background: var(--panel-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px; padding: clamp(10px, 2vh, 20px) clamp(20px, 3vw, 30px);
+            border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 5px 15px -5px rgba(0,0,0,0.5);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .datetime-group { display: flex; align-items: baseline; gap: 15px; }
+        .clock-text { font-size: clamp(24px, 4vh, 36px); font-weight: 700; color: #fff; }
+        .date-text { font-size: clamp(14px, 2vh, 20px); color: var(--text-sub); font-weight: 500; }
+
+        .weather-group { display: flex; gap: clamp(10px, 2vw, 25px); align-items: center; }
+        .weather-item { display: flex; align-items: center; gap: 8px; font-size: clamp(16px, 2.5vh, 24px); font-weight: 600; }
+        .weather-icon { font-size: 1.2em; }
+
+        /* --- MAIN CONTENT AREA --- */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(15px, 3vw, 30px); flex: 1; min-height: 0; }
         
         .panel { 
             background: var(--panel-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 20px; padding: clamp(15px, 3vw, 30px); display: flex; flex-direction: column; 
             border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            overflow: hidden;
         }
         
         h2 { margin-top: 0; font-size: clamp(20px, 3.5vh, 32px); margin-bottom: clamp(15px, 3vh, 25px); font-weight: 700; }
         
-        .data-container { flex: 1; display: flex; flex-direction: column; gap: clamp(10px, 2vh, 18px); justify-content: flex-start; }
+        .data-container { flex: 1; display: flex; flex-direction: column; gap: clamp(10px, 2vh, 15px); justify-content: flex-start; }
         
         .data-card { 
-            background: var(--card-bg); padding: clamp(15px, 2.5vh, 25px) clamp(20px, 3vw, 30px); 
+            background: var(--card-bg); padding: clamp(15px, 2.5vh, 20px) clamp(20px, 3vw, 30px); 
             border-radius: 16px; display: flex; justify-content: space-between; align-items: center; 
             border-left: 6px solid #334155;
         }
         
         .main-text { font-size: clamp(18px, 3vh, 28px); font-weight: 500; }
-        .sub-text { font-size: clamp(12px, 1.8vh, 18px); color: var(--text-sub); margin-top: 4px; display: block;}
         .highlight-text { font-weight: 900; font-size: clamp(28px, 5vh, 46px); }
         
         @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; text-shadow: 0 0 15px rgba(239, 68, 68, 0.8); } 100% { opacity: 1; } }
@@ -52,17 +69,16 @@
 
         /* --- SUBTLE ROUTE SELECTOR UI --- */
         #route-toggle-btn {
-            position: fixed; bottom: 15px; left: 20px;
-            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05);
-            color: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 12px;
-            cursor: pointer; z-index: 100; transition: all 0.3s; backdrop-filter: blur(5px);
+            position: fixed; bottom: 15px; left: 20px; background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255,255,255,0.05); color: rgba(255, 255, 255, 0.2); 
+            border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; 
+            z-index: 100; transition: all 0.3s; backdrop-filter: blur(5px);
         }
         #route-toggle-btn:hover { background: rgba(255, 255, 255, 0.1); color: #94a3b8; }
         
         #route-menu {
-            position: fixed; bottom: 60px; left: 20px;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            position: fixed; bottom: 60px; left: 20px; background: rgba(15, 23, 42, 0.95); 
+            backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
             padding: 10px; display: none; flex-direction: column; gap: 8px; z-index: 100;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 250px;
         }
@@ -77,6 +93,19 @@
 </head>
 <body>
 
+    <!-- TOP HEADER -->
+    <div class="top-bar">
+        <div class="datetime-group">
+            <div class="clock-text" id="live-time">00:00</div>
+            <div class="date-text" id="live-date">Loading...</div>
+        </div>
+        <div class="weather-group" id="weather-header">
+            <!-- Populated by JS -->
+            <span class="weather-item"><span class="weather-icon">⛅</span> Loading...</span>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
     <div class="dashboard-grid">
         <!-- Left Side: Dynamic KMB -->
         <div class="panel">
@@ -86,34 +115,39 @@
             </div>
         </div>
 
-        <!-- Right Side: Weather -->
-        <div class="panel">
-            <h2 style="color: #fbbf24;">⛅ Live Weather</h2>
-            <div class="data-container" id="weather-data">
-                <div class="data-card"><span class="main-text">Fetching HKO...</span></div>
+        <!-- Right Side: Free Space! -->
+        <div class="panel" style="border: 2px dashed rgba(255,255,255,0.1); justify-content: center; align-items: center; text-align: center;">
+            <div style="color: var(--text-sub);">
+                <span style="font-size: 40px; display: block; margin-bottom: 10px;">✨</span>
+                <h3>Available Space</h3>
+                <p>Ready for MTR times, secondary bus route, or live HKO Warnings.</p>
             </div>
         </div>
     </div>
 
     <!-- On-Screen Local Menu -->
     <button id="route-toggle-btn" onclick="toggleRouteMenu()">⚲ Change Route</button>
-    <div id="route-menu">
-        <!-- Buttons injected by JS -->
-    </div>
+    <div id="route-menu"></div>
 
     <script>
-        // --- PREDEFINED ROUTES ---
-        // You can add or modify routes here. 
+        // --- CLOCK LOGIC ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- ROUTE MENU LOGIC ---
         const predefinedRoutes = [
             { id: 0, stopId: '215D99B3E2A5F8DD', route: '215X', desc: 'To Kowloon Station' },
             { id: 1, stopId: 'F7E2F7DF9DE0C12D', route: '16',   desc: 'To Mong Kok' },
             { id: 2, stopId: '22F5575A38166DDB', route: '14',   desc: 'To China Ferry Terminal' },
             { id: 3, stopId: '80E1C1A6E1E46A77', route: '603',  desc: 'To Central' }
         ];
+        let currentRouteIndex = 0;
 
-        let currentRouteIndex = 0; // Starts at 215X
-
-        // --- MENU LOGIC ---
         function buildMenu() {
             const menu = document.getElementById('route-menu');
             menu.innerHTML = '';
@@ -129,11 +163,10 @@
 
         function selectRoute(index) {
             currentRouteIndex = index;
-            toggleRouteMenu(); // Hide menu
-            fetchKMB(); // Immediately fetch new data
+            toggleRouteMenu();
+            fetchKMB(); 
         }
 
-        // Hide menu if user taps anywhere else on the screen
         document.addEventListener('click', function(event) {
             const menu = document.getElementById('route-menu');
             const btn = document.getElementById('route-toggle-btn');
@@ -141,8 +174,9 @@
                 menu.style.display = 'none';
             }
         });
+        buildMenu();
 
-        // --- KMB Logic ---
+        // --- KMB LOGIC ---
         async function fetchKMB() {
             const config = predefinedRoutes[currentRouteIndex];
             document.getElementById('bus-header').innerText = `🚍 ${config.route} ${config.desc}`;
@@ -174,9 +208,7 @@
 
                         container.innerHTML += `
                         <div class="data-card" style="border-left-color: ${color}">
-                            <div>
-                                <span class="main-text">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span> 
-                            </div>
+                            <div><span class="main-text">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span></div>
                             <span class="highlight-text ${animClass}" style="color: ${color}">${displayMins}</span>
                         </div>`;
                         count++;
@@ -186,7 +218,7 @@
             } catch (e) { document.getElementById('kmb-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">API Connection Error</span></div>'; }
         }
 
-        // --- Weather Logic ---
+        // --- WEATHER LOGIC (Header version) ---
         async function fetchWeather() {
             try {
                 const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
@@ -196,33 +228,14 @@
                 const humidity = wData.humidity ? wData.humidity.data[0].value : '--';
                 const uv = wData.uvindex ? wData.uvindex.data[0].value : '--';
                 
-                document.getElementById('weather-data').innerHTML = `
-                    <div class="data-card" style="border-left-color: #f59e0b;">
-                        <div>
-                            <span class="main-text">Temperature</span>
-                            <span class="sub-text">Kwun Tong District</span>
-                        </div>
-                        <span class="highlight-text" style="color: #f59e0b;">${ktTemp.value}°C</span>
-                    </div>
-                    <div class="data-card" style="border-left-color: #38bdf8;">
-                        <div>
-                            <span class="main-text">Humidity</span>
-                            <span class="sub-text">Relative Moisture</span>
-                        </div>
-                        <span class="highlight-text" style="color: #38bdf8;">${humidity}%</span>
-                    </div>
-                    <div class="data-card" style="border-left-color: #a855f7;">
-                        <div>
-                            <span class="main-text">UV Index</span>
-                            <span class="sub-text">Solar Radiation</span>
-                        </div>
-                        <span class="highlight-text" style="color: #a855f7;">${uv}</span>
-                    </div>
+                document.getElementById('weather-header').innerHTML = `
+                    <div class="weather-item" style="color: #f59e0b;"><span class="weather-icon">🌡️</span> ${ktTemp.value}°C</div>
+                    <div class="weather-item" style="color: #38bdf8;"><span class="weather-icon">💧</span> ${humidity}%</div>
+                    <div class="weather-item" style="color: #a855f7;"><span class="weather-icon">☀️</span> UV: ${uv}</div>
                 `;
-            } catch (e) { document.getElementById('weather-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">Error</span></div>'; }
+            } catch (e) { document.getElementById('weather-header').innerHTML = '<span style="color:var(--alert-red)">Weather Error</span>'; }
         }
 
-        buildMenu();
         fetchKMB(); setInterval(fetchKMB, 30000);
         fetchWeather(); setInterval(fetchWeather, 300000);
     </script>
