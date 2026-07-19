@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markets</title>
+    <style>
+        body { background: transparent; color: #e2e8f0; margin: 0; padding: 20px; height: 100vh; overflow: hidden; box-sizing: border-box; }
+        .panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px; height: calc(100% - 40px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <!-- TradingView Widget BEGIN -->
+        <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px); width:100%;"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/tv-widget-market-overview.js" async>
+          {
+          "colorTheme": "dark",
+          "dateRange": "12M",
+          "showChart": true,
+          "locale": "en",
+          "width": "100%",
+          "height": "100%",
+          "largeChartUrl": "",
+          "isTransparent": true,
+          "showSymbolLogo": true,
+          "showFloatingTooltip": false,
+          "tabs": [
+            {
+              "title": "Indices",
+              "symbols": [
+                { "s": "HSI:HSI", "d": "Hang Seng Index" },
+                { "s": "OANDA:SPX500USD", "d": "S&P 500" },
+                { "s": "OANDA:NAS100USD", "d": "Nasdaq 100" }
+              ]
+            },
+            {
+              "title": "Crypto",
+              "symbols": [
+                { "s": "BINANCE:BTCUSDT", "d": "Bitcoin" },
+                { "s": "BINANCE:ETHUSDT", "d": "Ethereum" }
+              ]
+            }
+          ]
+        }
+          </script>
+        </div>
+        <!-- TradingView Widget END -->
+    </div>
+</body>
+</html>

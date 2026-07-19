@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>World News</title>
+    <style>
+        body { background: transparent; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; height: 100vh; box-sizing: border-box; overflow: hidden; }
+        .panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); border-radius: 16px; padding: 30px; height: calc(100% - 60px); border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; }
+        h2 { margin-top: 0; color: #f87171; font-size: 28px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+        
+        /* Auto-scrolling list container */
+        .news-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 10px; }
+        .news-list::-webkit-scrollbar { width: 0px; } /* Hides ugly scrollbar */
+        
+        .news-item { background: rgba(15, 23, 42, 0.8); padding: 20px; border-radius: 12px; border-left: 4px solid #f87171; }
+        .news-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; color: #f8fafc; }
+        .news-date { font-size: 14px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h2>📰 RTHK Latest Headlines</h2>
+        <div class="news-list" id="news-container">
+            <div class="news-item"><div class="news-title">Fetching live news...</div></div>
+        </div>
+    </div>
+    <script>
+        async function fetchNews() {
+            const rssUrl = 'https://rthk.hk/rthk/news/rss/e_expressnews.xml';
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+            try {
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                // Parse the XML feed
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(data.contents, "text/xml");
+                const items = Array.from(xml.querySelectorAll("item")).slice(0, 8); // Get top 8 news stories
+                
+                const container = document.getElementById('news-container');
+                container.innerHTML = '';
+                
+                items.forEach(item => {
+                    const title = item.querySelector("title").textContent;
+                    const pubDate = new Date(item.querySelector("pubDate").textContent).toLocaleString('en-US', {hour: '2-digit', minute:'2-digit', month:'short', day:'numeric'});
+                    container.innerHTML += `
+                        <div class="news-item">
+                            <div class="news-title">${title}</div>
+                            <div class="news-date">${pubDate}</div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                document.getElementById('news-container').innerHTML = '<div class="news-item"><div class="news-title" style="color:#ef4444;">Failed to load news</div></div>';
+            }
+        }
+        
+        fetchNews();
+        setInterval(fetchNews, 300000); // Refresh every 5 minutes
+    </script>
+</body>
+</html>
