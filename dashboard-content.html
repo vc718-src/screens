@@ -2,60 +2,97 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lam Tin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dynamic Smart Dashboard</title>
     <style>
+        /* Responsive CSS Variables */
+        :root {
+            --bg-color: #0b1120;
+            --panel-bg: rgba(30, 41, 59, 0.4);
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent-bus: #38bdf8;
+            --accent-weather: #fbbf24;
+            --alert-red: #ef4444;
+            --alert-yellow: #f59e0b;
+            --alert-green: #4ade80;
+        }
+
         body {
-            background-color: transparent; 
-            color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0; padding: 20px; box-sizing: border-box; height: 100vh; overflow: hidden;
+            background-color: var(--bg-color); 
+            /* Subtle background gradient to add depth */
+            background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 100% 100%, hsla(225,39%,20%,0.3) 0, transparent 50%);
+            color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0; padding: clamp(10px, 2vw, 30px); box-sizing: border-box; height: 100vh; overflow: hidden;
         }
         
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100%; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(15px, 3vw, 30px); height: 100%; }
         
         .panel { 
-            background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); 
-            border-radius: 16px; padding: 25px; display: flex; flex-direction: column; 
-            border: 1px solid rgba(255,255,255,0.05); 
+            background: var(--panel-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px; padding: clamp(15px, 3vw, 30px); display: flex; flex-direction: column; 
+            border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
-        h2 { margin-top: 0; font-size: 22px; margin-bottom: 20px; }
         
-        .data-container { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        /* Fluid Header Sizing */
+        h2 { margin-top: 0; font-size: clamp(20px, 3.5vh, 32px); margin-bottom: clamp(15px, 3vh, 25px); font-weight: 700; letter-spacing: 0.5px;}
+        
+        .data-container { flex: 1; display: flex; flex-direction: column; gap: clamp(10px, 2vh, 18px); justify-content: flex-start; }
+        
         .data-card { 
-            background: rgba(15, 23, 42, 0.8); padding: 20px; border-radius: 12px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border-left: 5px solid #334155; 
+            background: var(--card-bg); padding: clamp(15px, 2.5vh, 25px) clamp(20px, 3vw, 30px); 
+            border-radius: 16px; display: flex; justify-content: space-between; align-items: center; 
+            border-left: 6px solid #334155; transition: all 0.3s ease;
         }
         
-        .main-text { font-size: 20px; color: #f8fafc; font-weight: 500;}
-        .highlight-text { font-weight: 800; font-size: 28px; }
+        /* Fluid Text Sizing */
+        .main-text { font-size: clamp(18px, 3vh, 28px); font-weight: 500; color: var(--text-main); }
+        .sub-text { font-size: clamp(12px, 1.8vh, 18px); color: var(--text-sub); margin-top: 4px; display: block;}
+        
+        .highlight-text { font-weight: 900; font-size: clamp(28px, 5vh, 46px); text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        
+        /* Attention Animations */
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; text-shadow: 0 0 15px rgba(239, 68, 68, 0.8); } 100% { opacity: 1; } }
+        .is-arriving { color: var(--alert-red); animation: pulse-red 2s infinite; }
     </style>
 </head>
 <body>
 
     <div class="dashboard-grid">
-        <!-- Left Side: KMB -->
+        <!-- Left Side: Dynamic KMB -->
         <div class="panel">
-            <h2 style="color: #38bdf8;">🚍 215X To Station</h2>
+            <h2 id="bus-header" style="color: var(--accent-bus);">🚍 Loading Route...</h2>
             <div class="data-container" id="kmb-data">
-                <div class="data-card"><span class="main-text">Loading KMB...</span></div>
+                <div class="data-card"><span class="main-text">Waiting for data...</span></div>
             </div>
         </div>
 
         <!-- Right Side: Weather -->
         <div class="panel">
-            <h2 style="color: #fbbf24;">⛅ Live Weather</h2>
+            <h2 style="color: var(--accent-weather);">⛅ Live Weather</h2>
             <div class="data-container" id="weather-data">
-                <div class="data-card"><span class="main-text">Loading Weather...</span></div>
+                <div class="data-card"><span class="main-text">Fetching HKO...</span></div>
             </div>
         </div>
     </div>
 
     <script>
+        // --- Dynamic URL Parameter Extraction ---
+        // Defaults to Lam Tin 215X if no parameters are provided
+        const urlParams = new URLSearchParams(window.location.search);
+        const config = {
+            stopId: urlParams.get('stop') || '215D99B3E2A5F8DD',
+            route: urlParams.get('route') || '215X',
+            desc: urlParams.get('desc') || 'To Station'
+        };
+
+        // Update UI Header Dynamically
+        document.getElementById('bus-header').innerText = `🚍 ${config.route} ${config.desc}`;
+
         // --- KMB Logic ---
         async function fetchKMB() {
-            const stopId = '215D99B3E2A5F8DD'; const route = '215X';
-            const kmbUrl = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopId}/${route}/1`;
+            const kmbUrl = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${config.stopId}/${config.route}/1`;
             try {
                 const response = await fetch(kmbUrl);
                 const result = await response.json();
@@ -73,54 +110,71 @@
                         if (seenMins.has(diffMins)) continue;
                         seenMins.add(diffMins);
 
-                        let color = '#4ade80'; let displayMins = `${diffMins} min`;
-                        if (diffMins <= 2) { color = '#ef4444'; displayMins = 'Arriving'; } 
-                        else if (diffMins <= 10) { color = '#f59e0b'; }
+                        // Dynamic Styling based on urgency
+                        let color = 'var(--alert-green)'; 
+                        let displayMins = `${diffMins} <span style="font-size: 0.5em; font-weight: 500;">MIN</span>`;
+                        let animClass = '';
+                        
+                        if (diffMins <= 2) { 
+                            color = 'var(--alert-red)'; 
+                            displayMins = 'Arriving'; 
+                            animClass = 'is-arriving';
+                        } else if (diffMins <= 10) { 
+                            color = 'var(--alert-yellow)'; 
+                        }
 
                         container.innerHTML += `
                         <div class="data-card" style="border-left-color: ${color}">
-                            <span class="main-text">${new Date(bus.eta).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span> 
-                            <span class="highlight-text" style="color: ${color}">${displayMins}</span>
+                            <div>
+                                <span class="main-text">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span> 
+                            </div>
+                            <span class="highlight-text ${animClass}" style="color: ${color}">${displayMins}</span>
                         </div>`;
                         count++;
                     }
-                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text">No buses</span></div>';
+                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text">No scheduled buses</span></div>';
                 }
-            } catch (e) { document.getElementById('kmb-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:#ef4444">Error</span></div>'; }
+            } catch (e) { document.getElementById('kmb-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">API Connection Error</span></div>'; }
         }
 
-        // --- Weather Logic (HKO API) ---
+        // --- Weather Logic ---
         async function fetchWeather() {
             try {
                 const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
                 const wData = await res.json();
                 
-                // Try to find Kwun Tong temp, fallback to HK Observatory default
                 const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
                 const humidity = wData.humidity ? wData.humidity.data[0].value : '--';
                 const uv = wData.uvindex ? wData.uvindex.data[0].value : '--';
                 
                 document.getElementById('weather-data').innerHTML = `
-                    <div class="data-card" style="border-left-color: #fbbf24;">
-                        <span class="main-text">Temperature (Kwun Tong)</span>
-                        <span class="highlight-text" style="color: #fbbf24;">${ktTemp.value}°C</span>
+                    <div class="data-card" style="border-left-color: #f59e0b;">
+                        <div>
+                            <span class="main-text">Temperature</span>
+                            <span class="sub-text">Kwun Tong District</span>
+                        </div>
+                        <span class="highlight-text" style="color: #f59e0b;">${ktTemp.value}°C</span>
                     </div>
-                    <div class="data-card" style="border-left-color: #60a5fa;">
-                        <span class="main-text">Relative Humidity</span>
-                        <span class="highlight-text" style="color: #60a5fa;">${humidity}%</span>
+                    <div class="data-card" style="border-left-color: #38bdf8;">
+                        <div>
+                            <span class="main-text">Humidity</span>
+                            <span class="sub-text">Relative Moisture</span>
+                        </div>
+                        <span class="highlight-text" style="color: #38bdf8;">${humidity}%</span>
                     </div>
-                    <div class="data-card" style="border-left-color: #a78bfa;">
-                        <span class="main-text">UV Index</span>
-                        <span class="highlight-text" style="color: #a78bfa;">${uv}</span>
+                    <div class="data-card" style="border-left-color: #a855f7;">
+                        <div>
+                            <span class="main-text">UV Index</span>
+                            <span class="sub-text">Solar Radiation</span>
+                        </div>
+                        <span class="highlight-text" style="color: #a855f7;">${uv}</span>
                     </div>
                 `;
-            } catch (e) {
-                document.getElementById('weather-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:#ef4444">Error</span></div>';
-            }
+            } catch (e) { document.getElementById('weather-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">Error</span></div>'; }
         }
 
         fetchKMB(); setInterval(fetchKMB, 30000);
-        fetchWeather(); setInterval(fetchWeather, 300000); // Every 5 mins
+        fetchWeather(); setInterval(fetchWeather, 300000);
     </script>
 </body>
 </html>
