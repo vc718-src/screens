@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleet Admin Controller</title>
+    <title>Global Fleet Manager</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -27,7 +27,7 @@
         button.secondary:hover { background: #475569; }
 
         /* Device List Styles */
-        .device-list { background: #0f172a; border-radius: 8px; border: 1px solid #334155; max-height: 200px; overflow-y: auto; margin-bottom: 20px;}
+        .device-list { background: #0f172a; border-radius: 8px; border: 1px solid #334155; max-height: 250px; overflow-y: auto; margin-bottom: 20px;}
         .device-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #1e293b; }
         .device-item:last-child { border-bottom: none; }
         .device-label { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;}
@@ -39,19 +39,25 @@
 
         .empty-state { padding: 20px; text-align: center; color: #64748b; font-size: 14px; font-style: italic; }
         #status-msg { text-align: center; margin-top: 15px; font-weight: bold; display: none; }
+        
+        /* Cloud Sync Indicator */
+        .sync-status { text-align: center; font-size: 12px; color: #4ade80; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 5px;}
+        .pulse { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: blink 2s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
 
     <div>
-        <!-- PANEL 1: Fleet Manager (Pushing) -->
+        <!-- PANEL 1: Fleet Manager -->
         <div class="admin-card">
-            <h2>📱 Fleet Dashboard</h2>
+            <h2>☁️ Global Fleet Dashboard</h2>
+            <div class="sync-status"><div class="pulse"></div> Synced to Cloud Database</div>
             
             <div class="form-group">
                 <h3>1. Select Target Devices</h3>
                 <div class="device-list" id="device-list">
-                    <div class="empty-state">No devices paired yet. Add one below!</div>
+                    <div class="empty-state">Loading fleet from cloud...</div>
                 </div>
             </div>
 
@@ -76,10 +82,10 @@
                 <label>PIN & Device Nickname:</label>
                 <div class="pin-container">
                     <input type="text" id="new-pin" class="pin-input" maxlength="4" placeholder="PIN" autocomplete="off">
-                    <input type="text" id="new-name" class="name-input" placeholder="e.g. Kitchen iPad" autocomplete="off">
+                    <input type="text" id="new-name" class="name-input" placeholder="e.g. Living Room TV" autocomplete="off">
                 </div>
             </div>
-            <button class="secondary" onclick="pairNewDevice()">Save Device to Fleet</button>
+            <button class="secondary" onclick="pairNewDevice()">Save Device to Cloud Fleet</button>
         </div>
     </div>
 
@@ -96,8 +102,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Load saved fleet from local storage (Admin panel memory)
-        let savedFleet = JSON.parse(localStorage.getItem('admin_fleet')) || [];
+        let currentFleetCount = 0;
 
         function showStatus(msg, isError = false) {
             const statusEl = document.getElementById('status-msg');
@@ -107,74 +112,79 @@
             setTimeout(() => statusEl.style.display = 'none', 4000);
         }
 
-        // Render the checklist of devices
-        function renderDeviceList() {
+        // --- GLOBAL SYNC: Listen to Firebase Registry ---
+        db.ref('registry').on('value', (snapshot) => {
             const listEl = document.getElementById('device-list');
-            if (savedFleet.length === 0) {
-                listEl.innerHTML = '<div class="empty-state">No devices paired yet. Add one below!</div>';
+            listEl.innerHTML = '';
+            
+            if (!snapshot.exists()) {
+                listEl.innerHTML = '<div class="empty-state">No devices in cloud registry. Pair one below!</div>';
+                currentFleetCount = 0;
                 return;
             }
 
-            listEl.innerHTML = '';
-            savedFleet.forEach((device, index) => {
+            const devices = snapshot.val();
+            currentFleetCount = Object.keys(devices).length;
+            
+            for (const [deviceId, data] of Object.entries(devices)) {
                 listEl.innerHTML += `
                     <div class="device-item">
                         <label class="device-label">
-                            <input type="checkbox" class="device-checkbox" value="${device.id}" checked>
+                            <input type="checkbox" class="device-checkbox" value="${deviceId}" checked>
                             <div>
-                                <div class="device-name">${device.name}</div>
-                                <div class="device-id">${device.id}</div>
+                                <div class="device-name">${data.name}</div>
+                                <div class="device-id">${deviceId}</div>
                             </div>
                         </label>
-                        <button class="delete-btn" onclick="removeDevice(${index})" title="Remove from fleet">✕</button>
+                        <button class="delete-btn" onclick="removeDevice('${deviceId}', '${data.name}')" title="Remove from cloud">✕</button>
                     </div>
                 `;
-            });
-        }
+            }
+        });
 
-        // Pair a new device and add it to the Admin memory
+        // --- Pair a new device and save it to FIREBASE ---
         async function pairNewDevice() {
             const pin = document.getElementById('new-pin').value.trim();
-            const name = document.getElementById('new-name').value.trim() || `Display ${savedFleet.length + 1}`;
+            const name = document.getElementById('new-name').value.trim() || `Display ${currentFleetCount + 1}`;
 
             if (pin.length !== 4) { alert("Please enter a valid 4-digit PIN"); return; }
 
-            // Look up PIN in Firebase
             const pinSnapshot = await db.ref('pins/' + pin).once('value');
             if (!pinSnapshot.exists()) { alert("Invalid or expired PIN."); return; }
 
             const deviceId = pinSnapshot.val().device_id;
 
-            // Add to our fleet array and save
-            savedFleet.push({ id: deviceId, name: name });
-            localStorage.setItem('admin_fleet', JSON.stringify(savedFleet));
+            // Save to Global Registry
+            await db.ref('registry/' + deviceId).set({
+                name: name,
+                added_at: Date.now()
+            });
             
-            // Clean up the used PIN from Firebase
+            // Clean up PIN
             await db.ref('pins/' + pin).remove();
 
-            // Reset inputs and redraw list
             document.getElementById('new-pin').value = '';
             document.getElementById('new-name').value = '';
-            renderDeviceList();
-            alert(`Success! "${name}" added to your fleet.`);
+            alert(`Success! "${name}" saved to the cloud.`);
         }
 
-        function removeDevice(index) {
-            if(confirm(`Remove "${savedFleet[index].name}" from your fleet?`)) {
-                savedFleet.splice(index, 1);
-                localStorage.setItem('admin_fleet', JSON.stringify(savedFleet));
-                renderDeviceList();
+        // --- Remove device from FIREBASE ---
+        function removeDevice(deviceId, name) {
+            if(confirm(`Remove "${name}" from the global fleet? This will unpair the device.`)) {
+                // Delete from registry
+                db.ref('registry/' + deviceId).remove();
+                // Tell the device to go back to the PIN screen
+                db.ref('devices/' + deviceId).remove();
             }
         }
 
-        // The "One-to-Many" Push function
+        // --- Push URL to selected devices ---
         async function pushToSelected() {
             const checkboxes = document.querySelectorAll('.device-checkbox:checked');
             const targetUrl = document.getElementById('target-url').value;
             
             if (checkboxes.length === 0) { showStatus("Please select at least one device.", true); return; }
 
-            // Loop through every checked device and update Firebase simultaneously
             const updatePromises = Array.from(checkboxes).map(box => {
                 const payload = { target_url: targetUrl, updated_at: Date.now() };
                 return db.ref('devices/' + box.value).set(payload);
@@ -183,9 +193,6 @@
             await Promise.all(updatePromises);
             showStatus(`Success! Pushed to ${checkboxes.length} device(s).`);
         }
-
-        // Init
-        renderDeviceList();
     </script>
 </body>
 </html>
