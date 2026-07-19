@@ -64,11 +64,14 @@
             <div class="form-group">
                 <h3>2. Select Content to Push</h3>
                 <select id="target-url">
-                    <option value="./dashboard-content.html">🚍 Lam Tin Transit & Weather</option>
-                    <option value="./stocks.html">📈 Global Markets & HSI</option>
-                    <option value="./clock.html">🕰️ Minimalist Desk Clock</option>
-                    <option value="./news.html">📰 World News Ticker</option>
-                </select>
+                <!-- You can now have multiple bus routes simply by changing the URL variables! -->
+                <option value="./dashboard-content.html?stop=215D99B3E2A5F8DD&route=215X&desc=To Kowloon Station">🚍 Lam Tin: 215X (Kowloon)</option>
+                <option value="./dashboard-content.html?stop=F7E2F7DF9DE0C12D&route=16&desc=To Mong Kok">🚍 Lam Tin: 16 (Mong Kok)</option>
+                
+                <option value="./stocks.html">📈 Global Markets & HSI</option>
+                <option value="./clock.html">🕰️ Minimalist Desk Clock</option>
+                <option value="./news.html">📰 World News Ticker</option>
+            </select>
             </div>
 
             <button onclick="pushToSelected()">Push to Selected Devices</button>
