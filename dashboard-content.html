@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dynamic Smart Dashboard</title>
     <style>
-        /* Responsive CSS Variables */
         :root {
             --bg-color: #0b1120;
             --panel-bg: rgba(30, 41, 59, 0.4);
@@ -13,7 +12,6 @@
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --accent-bus: #38bdf8;
-            --accent-weather: #fbbf24;
             --alert-red: #ef4444;
             --alert-yellow: #f59e0b;
             --alert-green: #4ade80;
@@ -21,10 +19,10 @@
 
         body {
             background-color: var(--bg-color); 
-            /* Subtle background gradient to add depth */
             background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 100% 100%, hsla(225,39%,20%,0.3) 0, transparent 50%);
-            color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0; padding: clamp(10px, 2vw, 30px); box-sizing: border-box; height: 100vh; overflow: hidden;
+            position: relative;
         }
         
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(15px, 3vw, 30px); height: 100%; }
@@ -35,26 +33,46 @@
             border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         }
         
-        /* Fluid Header Sizing */
-        h2 { margin-top: 0; font-size: clamp(20px, 3.5vh, 32px); margin-bottom: clamp(15px, 3vh, 25px); font-weight: 700; letter-spacing: 0.5px;}
+        h2 { margin-top: 0; font-size: clamp(20px, 3.5vh, 32px); margin-bottom: clamp(15px, 3vh, 25px); font-weight: 700; }
         
         .data-container { flex: 1; display: flex; flex-direction: column; gap: clamp(10px, 2vh, 18px); justify-content: flex-start; }
         
         .data-card { 
             background: var(--card-bg); padding: clamp(15px, 2.5vh, 25px) clamp(20px, 3vw, 30px); 
             border-radius: 16px; display: flex; justify-content: space-between; align-items: center; 
-            border-left: 6px solid #334155; transition: all 0.3s ease;
+            border-left: 6px solid #334155;
         }
         
-        /* Fluid Text Sizing */
-        .main-text { font-size: clamp(18px, 3vh, 28px); font-weight: 500; color: var(--text-main); }
+        .main-text { font-size: clamp(18px, 3vh, 28px); font-weight: 500; }
         .sub-text { font-size: clamp(12px, 1.8vh, 18px); color: var(--text-sub); margin-top: 4px; display: block;}
+        .highlight-text { font-weight: 900; font-size: clamp(28px, 5vh, 46px); }
         
-        .highlight-text { font-weight: 900; font-size: clamp(28px, 5vh, 46px); text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        
-        /* Attention Animations */
         @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; text-shadow: 0 0 15px rgba(239, 68, 68, 0.8); } 100% { opacity: 1; } }
         .is-arriving { color: var(--alert-red); animation: pulse-red 2s infinite; }
+
+        /* --- SUBTLE ROUTE SELECTOR UI --- */
+        #route-toggle-btn {
+            position: fixed; bottom: 15px; left: 20px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 12px;
+            cursor: pointer; z-index: 100; transition: all 0.3s; backdrop-filter: blur(5px);
+        }
+        #route-toggle-btn:hover { background: rgba(255, 255, 255, 0.1); color: #94a3b8; }
+        
+        #route-menu {
+            position: fixed; bottom: 60px; left: 20px;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+            padding: 10px; display: none; flex-direction: column; gap: 8px; z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 250px;
+        }
+        
+        .route-option-btn {
+            background: transparent; color: #e2e8f0; border: none; padding: 12px 15px;
+            border-radius: 8px; text-align: left; font-size: 16px; font-weight: 500;
+            cursor: pointer; transition: background 0.2s; border-left: 3px solid transparent;
+        }
+        .route-option-btn:hover { background: rgba(56, 189, 248, 0.15); border-left: 3px solid #38bdf8; }
     </style>
 </head>
 <body>
@@ -62,7 +80,7 @@
     <div class="dashboard-grid">
         <!-- Left Side: Dynamic KMB -->
         <div class="panel">
-            <h2 id="bus-header" style="color: var(--accent-bus);">🚍 Loading Route...</h2>
+            <h2 id="bus-header" style="color: var(--accent-bus);">🚍 Loading...</h2>
             <div class="data-container" id="kmb-data">
                 <div class="data-card"><span class="main-text">Waiting for data...</span></div>
             </div>
@@ -70,29 +88,66 @@
 
         <!-- Right Side: Weather -->
         <div class="panel">
-            <h2 style="color: var(--accent-weather);">⛅ Live Weather</h2>
+            <h2 style="color: #fbbf24;">⛅ Live Weather</h2>
             <div class="data-container" id="weather-data">
                 <div class="data-card"><span class="main-text">Fetching HKO...</span></div>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- Dynamic URL Parameter Extraction ---
-        // Defaults to Lam Tin 215X if no parameters are provided
-        const urlParams = new URLSearchParams(window.location.search);
-        const config = {
-            stopId: urlParams.get('stop') || '215D99B3E2A5F8DD',
-            route: urlParams.get('route') || '215X',
-            desc: urlParams.get('desc') || 'To Station'
-        };
+    <!-- On-Screen Local Menu -->
+    <button id="route-toggle-btn" onclick="toggleRouteMenu()">⚲ Change Route</button>
+    <div id="route-menu">
+        <!-- Buttons injected by JS -->
+    </div>
 
-        // Update UI Header Dynamically
-        document.getElementById('bus-header').innerText = `🚍 ${config.route} ${config.desc}`;
+    <script>
+        // --- PREDEFINED ROUTES ---
+        // You can add or modify routes here. 
+        const predefinedRoutes = [
+            { id: 0, stopId: '215D99B3E2A5F8DD', route: '215X', desc: 'To Kowloon Station' },
+            { id: 1, stopId: 'F7E2F7DF9DE0C12D', route: '16',   desc: 'To Mong Kok' },
+            { id: 2, stopId: '22F5575A38166DDB', route: '14',   desc: 'To China Ferry Terminal' },
+            { id: 3, stopId: '80E1C1A6E1E46A77', route: '603',  desc: 'To Central' }
+        ];
+
+        let currentRouteIndex = 0; // Starts at 215X
+
+        // --- MENU LOGIC ---
+        function buildMenu() {
+            const menu = document.getElementById('route-menu');
+            menu.innerHTML = '';
+            predefinedRoutes.forEach((r, index) => {
+                menu.innerHTML += `<button class="route-option-btn" onclick="selectRoute(${index})">🚍 ${r.route} (${r.desc})</button>`;
+            });
+        }
+
+        function toggleRouteMenu() {
+            const menu = document.getElementById('route-menu');
+            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function selectRoute(index) {
+            currentRouteIndex = index;
+            toggleRouteMenu(); // Hide menu
+            fetchKMB(); // Immediately fetch new data
+        }
+
+        // Hide menu if user taps anywhere else on the screen
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('route-menu');
+            const btn = document.getElementById('route-toggle-btn');
+            if (menu.style.display === 'flex' && !menu.contains(event.target) && event.target !== btn) {
+                menu.style.display = 'none';
+            }
+        });
 
         // --- KMB Logic ---
         async function fetchKMB() {
+            const config = predefinedRoutes[currentRouteIndex];
+            document.getElementById('bus-header').innerText = `🚍 ${config.route} ${config.desc}`;
             const kmbUrl = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${config.stopId}/${config.route}/1`;
+            
             try {
                 const response = await fetch(kmbUrl);
                 const result = await response.json();
@@ -110,18 +165,12 @@
                         if (seenMins.has(diffMins)) continue;
                         seenMins.add(diffMins);
 
-                        // Dynamic Styling based on urgency
                         let color = 'var(--alert-green)'; 
                         let displayMins = `${diffMins} <span style="font-size: 0.5em; font-weight: 500;">MIN</span>`;
                         let animClass = '';
                         
-                        if (diffMins <= 2) { 
-                            color = 'var(--alert-red)'; 
-                            displayMins = 'Arriving'; 
-                            animClass = 'is-arriving';
-                        } else if (diffMins <= 10) { 
-                            color = 'var(--alert-yellow)'; 
-                        }
+                        if (diffMins <= 2) { color = 'var(--alert-red)'; displayMins = 'Arriving'; animClass = 'is-arriving'; } 
+                        else if (diffMins <= 10) { color = 'var(--alert-yellow)'; }
 
                         container.innerHTML += `
                         <div class="data-card" style="border-left-color: ${color}">
@@ -132,7 +181,7 @@
                         </div>`;
                         count++;
                     }
-                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text">No scheduled buses</span></div>';
+                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--text-sub)">No scheduled buses</span></div>';
                 }
             } catch (e) { document.getElementById('kmb-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">API Connection Error</span></div>'; }
         }
@@ -173,6 +222,7 @@
             } catch (e) { document.getElementById('weather-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">Error</span></div>'; }
         }
 
+        buildMenu();
         fetchKMB(); setInterval(fetchKMB, 30000);
         fetchWeather(); setInterval(fetchWeather, 300000);
     </script>
