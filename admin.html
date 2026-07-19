@@ -8,46 +8,79 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { background-color: #0b1120; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; }
-        .admin-card { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
-        h2 { margin-top: 0; color: #38bdf8; text-align: center; margin-bottom: 25px; }
+        .admin-card { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;}
+        h2 { margin-top: 0; color: #38bdf8; text-align: center; margin-bottom: 25px; font-size: 24px;}
+        h3 { font-size: 16px; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-top: 0;}
         
         .form-group { margin-bottom: 20px; }
         label { display: block; font-size: 14px; color: #94a3b8; margin-bottom: 8px; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
+        input[type="text"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
         input:focus, select:focus { outline: none; border-color: #38bdf8; }
         
-        .pin-input { font-size: 24px; text-align: center; letter-spacing: 5px; font-weight: bold; color: #38bdf8; text-transform: uppercase; }
+        .pin-container { display: flex; gap: 10px; }
+        .pin-input { font-size: 20px; text-align: center; letter-spacing: 5px; font-weight: bold; color: #38bdf8; flex: 1; }
+        .name-input { flex: 2; }
         
-        button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #3b82f6; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #3b82f6; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         button:hover { background: #2563eb; }
-        
+        button.secondary { background: #334155; margin-top: 10px; }
+        button.secondary:hover { background: #475569; }
+
+        /* Device List Styles */
+        .device-list { background: #0f172a; border-radius: 8px; border: 1px solid #334155; max-height: 200px; overflow-y: auto; margin-bottom: 20px;}
+        .device-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #1e293b; }
+        .device-item:last-child { border-bottom: none; }
+        .device-label { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1;}
+        .device-name { font-weight: 500; font-size: 16px; }
+        .device-id { font-size: 12px; color: #64748b; font-family: monospace;}
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer;}
+        .delete-btn { color: #ef4444; background: none; border: none; font-size: 18px; cursor: pointer; padding: 0 5px; width: auto; }
+        .delete-btn:hover { background: none; color: #b91c1c; }
+
+        .empty-state { padding: 20px; text-align: center; color: #64748b; font-size: 14px; font-style: italic; }
         #status-msg { text-align: center; margin-top: 15px; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="admin-card">
-        <h2>🛠️ URL Fleet Manager</h2>
-        
-        <div class="form-group">
-            <label>ENTER 4-DIGIT PIN FROM DISPLAY:</label>
-            <input type="text" id="target-pin" class="pin-input" maxlength="4" placeholder="----" autocomplete="off">
+    <div>
+        <!-- PANEL 1: Fleet Manager (Pushing) -->
+        <div class="admin-card">
+            <h2>📱 Fleet Dashboard</h2>
+            
+            <div class="form-group">
+                <h3>1. Select Target Devices</h3>
+                <div class="device-list" id="device-list">
+                    <div class="empty-state">No devices paired yet. Add one below!</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3>2. Select Content to Push</h3>
+                <select id="target-url">
+                    <option value="./dashboard-content.html">🚍 Lam Tin Transit & Weather</option>
+                    <option value="./stocks.html">📈 Global Markets & HSI</option>
+                    <option value="./clock.html">🕰️ Minimalist Desk Clock</option>
+                    <option value="./news.html">📰 World News Ticker</option>
+                </select>
+            </div>
+
+            <button onclick="pushToSelected()">Push to Selected Devices</button>
+            <p id="status-msg"></p>
         </div>
 
-        <div style="border-top: 1px solid #334155; margin: 25px 0;"></div>
-
-        <div class="form-group">
-            <label>Select Dashboard to Push:</label>
-            <select id="target-url">
-                <option value="./dashboard-content.html">🚍 Lam Tin Transit & Weather</option>
-                <option value="./stocks.html">📈 Global Markets & HSI</option>
-                <option value="./clock.html">🕰️ Minimalist Desk Clock</option>
-                <option value="./news.html">📰 World News Ticker</option>
-            </select>
+        <!-- PANEL 2: Device Pairing -->
+        <div class="admin-card">
+            <h2>🔗 Pair New Device</h2>
+            <div class="form-group">
+                <label>PIN & Device Nickname:</label>
+                <div class="pin-container">
+                    <input type="text" id="new-pin" class="pin-input" maxlength="4" placeholder="PIN" autocomplete="off">
+                    <input type="text" id="new-name" class="name-input" placeholder="e.g. Kitchen iPad" autocomplete="off">
+                </div>
+            </div>
+            <button class="secondary" onclick="pairNewDevice()">Save Device to Fleet</button>
         </div>
-
-        <button onclick="pairAndPush()">Push to Display</button>
-        <p id="status-msg"></p>
     </div>
 
     <script>
@@ -58,13 +91,13 @@
             apiKey: "AIzaSyDrh8Rg4xFQYZiae-4Z9cwpQNv5hYD4HNU",
             authDomain: "dashboard-fleet.firebaseapp.com",
             databaseURL: "https://dashboard-fleet-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "dashboard-fleet",
-            storageBucket: "dashboard-fleet.firebasestorage.app",
-            messagingSenderId: "496285796113",
-            appId: "1:496285796113:web:e18edb6f530b1425f2eeb0"
+            projectId: "dashboard-fleet"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+
+        // Load saved fleet from local storage (Admin panel memory)
+        let savedFleet = JSON.parse(localStorage.getItem('admin_fleet')) || [];
 
         function showStatus(msg, isError = false) {
             const statusEl = document.getElementById('status-msg');
@@ -74,25 +107,85 @@
             setTimeout(() => statusEl.style.display = 'none', 4000);
         }
 
-        async function pairAndPush() {
-            const pin = document.getElementById('target-pin').value.trim();
-            const targetUrl = document.getElementById('target-url').value; // Now reads from the dropdown
+        // Render the checklist of devices
+        function renderDeviceList() {
+            const listEl = document.getElementById('device-list');
+            if (savedFleet.length === 0) {
+                listEl.innerHTML = '<div class="empty-state">No devices paired yet. Add one below!</div>';
+                return;
+            }
 
-            if (pin.length !== 4) { showStatus("Please enter a valid 4-digit PIN", true); return; }
+            listEl.innerHTML = '';
+            savedFleet.forEach((device, index) => {
+                listEl.innerHTML += `
+                    <div class="device-item">
+                        <label class="device-label">
+                            <input type="checkbox" class="device-checkbox" value="${device.id}" checked>
+                            <div>
+                                <div class="device-name">${device.name}</div>
+                                <div class="device-id">${device.id}</div>
+                            </div>
+                        </label>
+                        <button class="delete-btn" onclick="removeDevice(${index})" title="Remove from fleet">✕</button>
+                    </div>
+                `;
+            });
+        }
 
+        // Pair a new device and add it to the Admin memory
+        async function pairNewDevice() {
+            const pin = document.getElementById('new-pin').value.trim();
+            const name = document.getElementById('new-name').value.trim() || `Display ${savedFleet.length + 1}`;
+
+            if (pin.length !== 4) { alert("Please enter a valid 4-digit PIN"); return; }
+
+            // Look up PIN in Firebase
             const pinSnapshot = await db.ref('pins/' + pin).once('value');
-            if (!pinSnapshot.exists()) { showStatus("Invalid or expired PIN.", true); return; }
+            if (!pinSnapshot.exists()) { alert("Invalid or expired PIN."); return; }
 
             const deviceId = pinSnapshot.val().device_id;
 
-            const payload = { target_url: targetUrl, updated_at: Date.now() };
-            await db.ref('devices/' + deviceId).set(payload);
+            // Add to our fleet array and save
+            savedFleet.push({ id: deviceId, name: name });
+            localStorage.setItem('admin_fleet', JSON.stringify(savedFleet));
             
+            // Clean up the used PIN from Firebase
             await db.ref('pins/' + pin).remove();
 
-            showStatus("Success! Display is loading the new layout.");
-            document.getElementById('target-pin').value = '';
+            // Reset inputs and redraw list
+            document.getElementById('new-pin').value = '';
+            document.getElementById('new-name').value = '';
+            renderDeviceList();
+            alert(`Success! "${name}" added to your fleet.`);
         }
+
+        function removeDevice(index) {
+            if(confirm(`Remove "${savedFleet[index].name}" from your fleet?`)) {
+                savedFleet.splice(index, 1);
+                localStorage.setItem('admin_fleet', JSON.stringify(savedFleet));
+                renderDeviceList();
+            }
+        }
+
+        // The "One-to-Many" Push function
+        async function pushToSelected() {
+            const checkboxes = document.querySelectorAll('.device-checkbox:checked');
+            const targetUrl = document.getElementById('target-url').value;
+            
+            if (checkboxes.length === 0) { showStatus("Please select at least one device.", true); return; }
+
+            // Loop through every checked device and update Firebase simultaneously
+            const updatePromises = Array.from(checkboxes).map(box => {
+                const payload = { target_url: targetUrl, updated_at: Date.now() };
+                return db.ref('devices/' + box.value).set(payload);
+            });
+
+            await Promise.all(updatePromises);
+            showStatus(`Success! Pushed to ${checkboxes.length} device(s).`);
+        }
+
+        // Init
+        renderDeviceList();
     </script>
 </body>
 </html>
