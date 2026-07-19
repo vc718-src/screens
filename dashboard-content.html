@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lam Tin Dashboard</title>
+    <style>
+        body {
+            background-color: transparent; 
+            color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0; padding: 20px; box-sizing: border-box; height: 100vh; overflow: hidden;
+        }
+        
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100%; }
+        
+        .panel { 
+            background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); 
+            border-radius: 16px; padding: 25px; display: flex; flex-direction: column; 
+            border: 1px solid rgba(255,255,255,0.05); 
+        }
+        h2 { margin-top: 0; font-size: 22px; margin-bottom: 20px; }
+        
+        .data-container { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        .data-card { 
+            background: rgba(15, 23, 42, 0.8); padding: 20px; border-radius: 12px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-left: 5px solid #334155; 
+        }
+        
+        .main-text { font-size: 20px; color: #f8fafc; font-weight: 500;}
+        .highlight-text { font-weight: 800; font-size: 28px; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-grid">
+        <!-- Left Side: KMB -->
+        <div class="panel">
+            <h2 style="color: #38bdf8;">🚍 215X To Station</h2>
+            <div class="data-container" id="kmb-data">
+                <div class="data-card"><span class="main-text">Loading KMB...</span></div>
+            </div>
+        </div>
+
+        <!-- Right Side: Weather -->
+        <div class="panel">
+            <h2 style="color: #fbbf24;">⛅ Live Weather</h2>
+            <div class="data-container" id="weather-data">
+                <div class="data-card"><span class="main-text">Loading Weather...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- KMB Logic ---
+        async function fetchKMB() {
+            const stopId = '215D99B3E2A5F8DD'; const route = '215X';
+            const kmbUrl = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopId}/${route}/1`;
+            try {
+                const response = await fetch(kmbUrl);
+                const result = await response.json();
+                const container = document.getElementById('kmb-data');
+                container.innerHTML = '';
+                
+                if (result.data) {
+                    let validBuses = result.data.filter(b => b.eta).sort((a, b) => new Date(a.eta) - new Date(b.eta));
+                    let seenMins = new Set();
+                    let count = 0;
+
+                    for (let bus of validBuses) {
+                        if (count >= 4) break;
+                        let diffMins = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
+                        if (seenMins.has(diffMins)) continue;
+                        seenMins.add(diffMins);
+
+                        let color = '#4ade80'; let displayMins = `${diffMins} min`;
+                        if (diffMins <= 2) { color = '#ef4444'; displayMins = 'Arriving'; } 
+                        else if (diffMins <= 10) { color = '#f59e0b'; }
+
+                        container.innerHTML += `
+                        <div class="data-card" style="border-left-color: ${color}">
+                            <span class="main-text">${new Date(bus.eta).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span> 
+                            <span class="highlight-text" style="color: ${color}">${displayMins}</span>
+                        </div>`;
+                        count++;
+                    }
+                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text">No buses</span></div>';
+                }
+            } catch (e) { document.getElementById('kmb-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:#ef4444">Error</span></div>'; }
+        }
+
+        // --- Weather Logic (HKO API) ---
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
+                const wData = await res.json();
+                
+                // Try to find Kwun Tong temp, fallback to HK Observatory default
+                const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
+                const humidity = wData.humidity ? wData.humidity.data[0].value : '--';
+                const uv = wData.uvindex ? wData.uvindex.data[0].value : '--';
+                
+                document.getElementById('weather-data').innerHTML = `
+                    <div class="data-card" style="border-left-color: #fbbf24;">
+                        <span class="main-text">Temperature (Kwun Tong)</span>
+                        <span class="highlight-text" style="color: #fbbf24;">${ktTemp.value}°C</span>
+                    </div>
+                    <div class="data-card" style="border-left-color: #60a5fa;">
+                        <span class="main-text">Relative Humidity</span>
+                        <span class="highlight-text" style="color: #60a5fa;">${humidity}%</span>
+                    </div>
+                    <div class="data-card" style="border-left-color: #a78bfa;">
+                        <span class="main-text">UV Index</span>
+                        <span class="highlight-text" style="color: #a78bfa;">${uv}</span>
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('weather-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:#ef4444">Error</span></div>';
+            }
+        }
+
+        fetchKMB(); setInterval(fetchKMB, 30000);
+        fetchWeather(); setInterval(fetchWeather, 300000); // Every 5 mins
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Admin Controller</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { background-color: #0b1120; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; }
+        .admin-card { background: #1e293b; padding: 30px; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
+        h2 { margin-top: 0; color: #38bdf8; text-align: center; margin-bottom: 25px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 14px; color: #94a3b8; margin-bottom: 8px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 16px; box-sizing: border-box; }
+        input:focus, select:focus { outline: none; border-color: #38bdf8; }
+        
+        .pin-input { font-size: 24px; text-align: center; letter-spacing: 5px; font-weight: bold; color: #38bdf8; text-transform: uppercase; }
+        
+        button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #3b82f6; color: white; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        button:hover { background: #2563eb; }
+        
+        #status-msg { text-align: center; margin-top: 15px; font-weight: bold; display: none; }
+        .help-text { font-size: 12px; color: #64748b; margin-top: 5px; line-height: 1.4;}
+    </style>
+</head>
+<body>
+
+    <div class="admin-card">
+        <h2>🛠️ URL Fleet Manager</h2>
+        
+        <div class="form-group">
+            <label>ENTER 4-DIGIT PIN FROM DISPLAY:</label>
+            <input type="text" id="target-pin" class="pin-input" maxlength="4" placeholder="----" autocomplete="off">
+        </div>
+
+        <div style="border-top: 1px solid #334155; margin: 25px 0;"></div>
+
+        <div class="form-group">
+            <label>Dashboard URL to Push:</label>
+            <!-- Defaulting to the local file we just created for testing -->
+            <input type="text" id="target-url" value="./dashboard-content.html">
+            <p class="help-text">Enter the full URL of the dashboard you want this display to show (e.g., https://yoursite.com/dashboard1.html). For local testing, relative paths like "./dashboard-content.html" work.</p>
+        </div>
+
+        <button onclick="pairAndPush()">Push URL to Display</button>
+        <p id="status-msg"></p>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. REPLACE WITH YOUR FIREBASE CONFIG
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrh8Rg4xFQYZiae-4Z9cwpQNv5hYD4HNU",
+            authDomain: "dashboard-fleet.firebaseapp.com",
+            databaseURL: "https://dashboard-fleet-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "dashboard-fleet",
+            storageBucket: "dashboard-fleet.firebasestorage.app",
+            messagingSenderId: "496285796113",
+            appId: "1:496285796113:web:e18edb6f530b1425f2eeb0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function showStatus(msg, isError = false) {
+            const statusEl = document.getElementById('status-msg');
+            statusEl.innerText = msg;
+            statusEl.style.color = isError ? '#ef4444' : '#4ade80';
+            statusEl.style.display = 'block';
+            setTimeout(() => statusEl.style.display = 'none', 4000);
+        }
+
+        async function pairAndPush() {
+            const pin = document.getElementById('target-pin').value.trim();
+            const targetUrl = document.getElementById('target-url').value.trim();
+
+            if (pin.length !== 4) { showStatus("Please enter a valid 4-digit PIN", true); return; }
+            if (!targetUrl) { showStatus("Please enter a target URL", true); return; }
+
+            // Look up PIN
+            const pinSnapshot = await db.ref('pins/' + pin).once('value');
+            if (!pinSnapshot.exists()) { showStatus("Invalid or expired PIN.", true); return; }
+
+            const deviceId = pinSnapshot.val().device_id;
+
+            // Write the URL payload to the device!
+            const payload = { target_url: targetUrl, updated_at: Date.now() };
+            await db.ref('devices/' + deviceId).set(payload);
+            
+            // Cleanup PIN
+            await db.ref('pins/' + pin).remove();
+
+            showStatus("Success! Display is loading the URL.");
+            document.getElementById('target-pin').value = '';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Smart Display Fleet</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #0b1120; overflow: hidden; }
+        #content-frame { width: 100%; height: 100%; border: none; display: none; }
+        
+        #pairing-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; font-family: sans-serif; color: white; }
+        .pin-code { font-size: 80px; font-weight: 900; letter-spacing: 15px; color: #38bdf8; margin: 20px 0; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+        
+        /* Shaded Reset Button */
+        .reset-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 24px;
+            display: none; /* Hidden during pairing */
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 9999;
+            transition: all 0.3s ease;
+        }
+        .reset-btn:hover, .reset-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pairing-screen">
+        <h2>Smart Display Ready</h2>
+        <p style="color: #94a3b8;">Enter this PIN on your Admin Device</p>
+        <p class="pin-code" id="display-pin">----</p>
+        <p style="color: #64748b;">Device ID: <span id="device-id-label"></span></p>
+    </div>
+
+    <iframe id="content-frame" src=""></iframe>
+    
+    <!-- The new return to pairing button -->
+    <button id="reset-btn" class="reset-btn" onclick="unpairDevice()" title="Unpair Device">⚙</button>
+
+    <script>
+        // ==========================================
+        // 1. REPLACE WITH YOUR FIREBASE CONFIG
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrh8Rg4xFQYZiae-4Z9cwpQNv5hYD4HNU",
+            authDomain: "dashboard-fleet.firebaseapp.com",
+            databaseURL: "https://dashboard-fleet-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "dashboard-fleet"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let pinRefreshTimer = null;
+
+        function initDevice() {
+            let deviceId = localStorage.getItem('fleet_device_id');
+            if (!deviceId) {
+                deviceId = 'dev_' + Math.random().toString(36).substr(2, 6);
+                localStorage.setItem('fleet_device_id', deviceId);
+            }
+            document.getElementById('device-id-label').innerText = deviceId;
+
+            db.ref('devices/' + deviceId).on('value', (snapshot) => {
+                if (snapshot.exists() && snapshot.val().target_url) {
+                    // WE HAVE A URL! 
+                    const config = snapshot.val();
+                    document.getElementById('pairing-screen').style.display = 'none';
+                    document.getElementById('content-frame').style.display = 'block';
+                    document.getElementById('reset-btn').style.display = 'flex'; // Show Gear Button
+                    
+                    if(document.getElementById('content-frame').src !== config.target_url) {
+                        document.getElementById('content-frame').src = config.target_url;
+                    }
+
+                    let lastPin = localStorage.getItem('last_pin');
+                    if (lastPin) db.ref('pins/' + lastPin).remove();
+                } else {
+                    // NO URL ASSIGNED. 
+                    document.getElementById('content-frame').style.display = 'none';
+                    document.getElementById('content-frame').src = '';
+                    document.getElementById('reset-btn').style.display = 'none'; // Hide Gear Button
+                    showPairingScreen(deviceId);
+                }
+            });
+        }
+
+        function showPairingScreen(deviceId) {
+            document.getElementById('pairing-screen').style.display = 'flex';
+            if (pinRefreshTimer) clearTimeout(pinRefreshTimer);
+
+            const pin = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('display-pin').innerText = pin;
+            localStorage.setItem('last_pin', pin);
+
+            db.ref('pins/' + pin).set({ device_id: deviceId, timestamp: Date.now() });
+            
+            pinRefreshTimer = setTimeout(() => {
+                if(document.getElementById('pairing-screen').style.display === 'flex') showPairingScreen(deviceId); 
+            }, 600000); 
+        }
+
+        // Deletes the assignment from Firebase, triggering the listener to instantly show the PIN
+        function unpairDevice() {
+            let deviceId = localStorage.getItem('fleet_device_id');
+            if(deviceId) {
+                db.ref('devices/' + deviceId).remove();
+            }
+        }
+
+        initDevice();
+    </script>
+</body>
+</html>
