@@ -24,45 +24,47 @@
             <div class="news-item"><div class="news-title">Fetching live news...</div></div>
         </div>
     </div>
-    <script>
+        <script>
         async function fetchNews() {
-            const rssUrl = 'https://rthk.hk/rthk/news/rss/e_expressnews.xml';
-            // Use corsproxy for pure XML passthrough
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`;
+            // Using a dedicated RSS-to-JSON service to avoid XML parsing and CORS proxy errors
+            const rssUrl = 'https://rthk.hk/rthk/news/rss/e_expressnews_elocal.xml';
+            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
             
             try {
-                const response = await fetch(proxyUrl);
-                const textData = await response.text();
+                const response = await fetch(apiUrl);
+                const data = await response.json();
                 
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(textData, "text/xml");
-                
-                // RTHK puts articles inside <item> tags
-                const items = Array.from(xml.querySelectorAll("item")).slice(0, 8); 
+                if (data.status !== "ok") throw new Error("RSS feed error");
                 
                 const container = document.getElementById('news-container');
                 container.innerHTML = '';
                 
-                if(items.length === 0) throw new Error("No items found");
-
+                // Get the top 8 articles
+                const items = data.items.slice(0, 8);
+                
                 items.forEach(item => {
-                    const title = item.querySelector("title").textContent;
-                    const pubDate = new Date(item.querySelector("pubDate").textContent).toLocaleString('en-US', {hour: '2-digit', minute:'2-digit', month:'short', day:'numeric'});
+                    const pubDate = new Date(item.pubDate).toLocaleString('en-US', {
+                        hour: '2-digit', minute:'2-digit', month:'short', day:'numeric'
+                    });
+                    
                     container.innerHTML += `
                         <div class="news-item">
-                            <div class="news-title">${title}</div>
+                            <div class="news-title">${item.title}</div>
                             <div class="news-date">${pubDate}</div>
                         </div>
                     `;
                 });
             } catch (e) {
                 console.error(e);
-                document.getElementById('news-container').innerHTML = '<div class="news-item"><div class="news-title" style="color:#ef4444;">Failed to load news. Proxy may be rate limited.</div></div>';
+                document.getElementById('news-container').innerHTML = `
+                    <div class="news-item">
+                        <div class="news-title" style="color:#ef4444;">Failed to load news.</div>
+                    </div>`;
             }
         }
         
         fetchNews();
-        setInterval(fetchNews, 300000); 
+        setInterval(fetchNews, 300000); // Refresh every 5 minutes
     </script>
 </body>
 </html>
