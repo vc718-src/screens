@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Markets</title>
     <style>
-        body { background: transparent; color: #e2e8f0; margin: 0; padding: 20px; height: 100vh; overflow: hidden; box-sizing: border-box; }
-        .panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px; height: calc(100% - 40px); border: 1px solid rgba(255,255,255,0.05); }
+        body { background: #0b1120; color: #e2e8f0; margin: 0; padding: 20px; height: 100vh; box-sizing: border-box; overflow: hidden;}
+        .panel { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px); border-radius: 16px; padding: 15px; height: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.05); }
+        .tradingview-widget-container { height: 100%; width: 100%; }
     </style>
 </head>
 <body>
     <div class="panel">
-        <!-- TradingView Widget BEGIN -->
-        <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
+        <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px); width:100%;"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/tv-widget-market-overview.js" async>
           {
@@ -46,7 +46,6 @@
         }
           </script>
         </div>
-        <!-- TradingView Widget END -->
     </div>
 </body>
 </html>
