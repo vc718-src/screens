@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fleet Admin Controller</title>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -23,7 +22,6 @@
         button:hover { background: #2563eb; }
         
         #status-msg { text-align: center; margin-top: 15px; font-weight: bold; display: none; }
-        .help-text { font-size: 12px; color: #64748b; margin-top: 5px; line-height: 1.4;}
     </style>
 </head>
 <body>
@@ -39,13 +37,16 @@
         <div style="border-top: 1px solid #334155; margin: 25px 0;"></div>
 
         <div class="form-group">
-            <label>Dashboard URL to Push:</label>
-            <!-- Defaulting to the local file we just created for testing -->
-            <input type="text" id="target-url" value="./dashboard-content.html">
-            <p class="help-text">Enter the full URL of the dashboard you want this display to show (e.g., https://yoursite.com/dashboard1.html). For local testing, relative paths like "./dashboard-content.html" work.</p>
+            <label>Select Dashboard to Push:</label>
+            <select id="target-url">
+                <option value="./dashboard-content.html">🚍 Lam Tin Transit & Weather</option>
+                <option value="./stocks.html">📈 Global Markets & HSI</option>
+                <option value="./clock.html">🕰️ Minimalist Desk Clock</option>
+                <option value="./news.html">📰 World News Ticker</option>
+            </select>
         </div>
 
-        <button onclick="pairAndPush()">Push URL to Display</button>
+        <button onclick="pairAndPush()">Push to Display</button>
         <p id="status-msg"></p>
     </div>
 
@@ -75,25 +76,21 @@
 
         async function pairAndPush() {
             const pin = document.getElementById('target-pin').value.trim();
-            const targetUrl = document.getElementById('target-url').value.trim();
+            const targetUrl = document.getElementById('target-url').value; // Now reads from the dropdown
 
             if (pin.length !== 4) { showStatus("Please enter a valid 4-digit PIN", true); return; }
-            if (!targetUrl) { showStatus("Please enter a target URL", true); return; }
 
-            // Look up PIN
             const pinSnapshot = await db.ref('pins/' + pin).once('value');
             if (!pinSnapshot.exists()) { showStatus("Invalid or expired PIN.", true); return; }
 
             const deviceId = pinSnapshot.val().device_id;
 
-            // Write the URL payload to the device!
             const payload = { target_url: targetUrl, updated_at: Date.now() };
             await db.ref('devices/' + deviceId).set(payload);
             
-            // Cleanup PIN
             await db.ref('pins/' + pin).remove();
 
-            showStatus("Success! Display is loading the URL.");
+            showStatus("Success! Display is loading the new layout.");
             document.getElementById('target-pin').value = '';
         }
     </script>
