@@ -141,12 +141,20 @@
 
         // --- ROUTE MENU LOGIC ---
         // Added 'dir' (I for Inbound, O for Outbound) to ensure we filter the correct buses from the stop.
+        // --- ROUTE MENU LOGIC ---
         const predefinedRoutes = [
+            // 215X: Lam Tin (Kwong Tin Estate) to Kowloon Station
             { id: 0, stopId: '215D99B3E2A5F8DD', route: '215X', dir: 'O', desc: 'To Kowloon Station' },
-            { id: 1, stopId: 'F7E2F7DF9DE0C12D', route: '16',   dir: 'O', desc: 'To Mong Kok' },
-            { id: 2, stopId: '22F5575A38166DDB', route: '14',   dir: 'O', desc: 'To China Ferry Terminal' },
-            { id: 3, stopId: '80E1C1A6E1E46A77', route: '603',  dir: 'O', desc: 'To Central' }
-        ];
+            
+            // 16: Lam Tin (Kwong Tin Estate) to Mong Kok
+            { id: 1, stopId: '92AA28BBE48D6B2E', route: '16',   dir: 'O', desc: 'To Mong Kok' },
+            
+            // 14: Lam Tin Station to China Ferry Terminal
+            { id: 2, stopId: '6C6B36F7550907CE', route: '14',   dir: 'O', desc: 'To China Ferry Terminal' },
+            
+            // 603: Lam Tin (North) to Central
+            { id: 3, stopId: '9D676B8892807F9D', route: '603',  dir: 'O', desc: 'To Central' }
+        ];        
         let currentRouteIndex = 0;
 
         function buildMenu() {
