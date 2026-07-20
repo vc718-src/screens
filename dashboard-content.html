@@ -165,7 +165,6 @@
             } catch (e) {}
         }
 
-        // --- NEW MTR LOGIC ---
         const mtrDests = { 'TKL': 'Tiu Keng Leng', 'WHA': 'Whampoa', 'KWT': 'Kwun Tong', 'HOP': 'Ho Man Tin' };
         
         async function fetchMTR() {
@@ -206,15 +205,30 @@
                         count++;
                     }
                 }
-            } catch (e) { document.getElementById('mtr-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">MTR API Error</span></div>'; }
+            } catch (e) {}
         }
 
         async function fetchWeather() {
             try {
-                const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
-                const wData = await res.json();
+                // Fetch normal weather
+                const resWeather = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
+                const wData = await resWeather.json();
                 const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
+                
+                // Fetch Warnings
+                const resWarn = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en');
+                const warnData = await resWarn.json();
+                
+                let warningHtml = '';
+                // If there are warnings, create a pulsing badge
+                if (warnData && Object.keys(warnData).length > 0) {
+                    // Get the first active warning name (e.g., "Thunderstorm Warning", "Amber Rainstorm Warning")
+                    const firstWarning = warnData[Object.keys(warnData)[0]].name;
+                    warningHtml = `<div class="weather-item is-arriving" style="background: rgba(239, 68, 68, 0.2); padding: 5px 12px; border-radius: 8px; font-size: clamp(14px, 2vh, 20px);">⚠️ ${firstWarning}</div>`;
+                }
+
                 document.getElementById('weather-header').innerHTML = `
+                    ${warningHtml}
                     <div class="weather-item" style="color: #f59e0b;"><span style="font-size:1.2em">🌡️</span> ${ktTemp.value}°C</div>
                     <div class="weather-item" style="color: #38bdf8;"><span style="font-size:1.2em">💧</span> ${wData.humidity.data[0].value}%</div>
                 `;
@@ -223,7 +237,7 @@
 
         fetchKMB(); setInterval(fetchKMB, 30000);
         fetchMTR(); setInterval(fetchMTR, 30000);
-        fetchWeather(); setInterval(fetchWeather, 300000);
+        fetchWeather(); setInterval(fetchWeather, 300000);    
     </script>
 </body>
 </html>
