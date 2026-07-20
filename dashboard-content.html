@@ -12,6 +12,7 @@
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --accent-bus: #38bdf8;
+            --accent-mtr: #10b981;
             --alert-red: #ef4444;
             --alert-yellow: #f59e0b;
             --alert-green: #4ade80;
@@ -25,7 +26,6 @@
             display: flex; flex-direction: column; gap: 15px;
         }
         
-        /* --- NEW TOP BAR (Clock & Weather) --- */
         .top-bar {
             background: var(--panel-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 20px; padding: clamp(10px, 2vh, 20px) clamp(20px, 3vw, 30px);
@@ -39,9 +39,7 @@
 
         .weather-group { display: flex; gap: clamp(10px, 2vw, 25px); align-items: center; }
         .weather-item { display: flex; align-items: center; gap: 8px; font-size: clamp(16px, 2.5vh, 24px); font-weight: 600; }
-        .weather-icon { font-size: 1.2em; }
 
-        /* --- MAIN CONTENT AREA --- */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(15px, 3vw, 30px); flex: 1; min-height: 0; }
         
         .panel { 
@@ -62,167 +60,96 @@
         }
         
         .main-text { font-size: clamp(18px, 3vh, 28px); font-weight: 500; }
+        .sub-text { font-size: clamp(12px, 1.8vh, 18px); color: var(--text-sub); margin-top: 4px; display: block;}
         .highlight-text { font-weight: 900; font-size: clamp(28px, 5vh, 46px); }
         
         @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; text-shadow: 0 0 15px rgba(239, 68, 68, 0.8); } 100% { opacity: 1; } }
         .is-arriving { color: var(--alert-red); animation: pulse-red 2s infinite; }
 
-        /* --- SUBTLE ROUTE SELECTOR UI --- */
         #route-toggle-btn {
             position: fixed; bottom: 15px; left: 20px; background: rgba(255, 255, 255, 0.03); 
             border: 1px solid rgba(255,255,255,0.05); color: rgba(255, 255, 255, 0.2); 
-            border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; 
-            z-index: 100; transition: all 0.3s; backdrop-filter: blur(5px);
+            border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; z-index: 100;
         }
-        #route-toggle-btn:hover { background: rgba(255, 255, 255, 0.1); color: #94a3b8; }
-        
         #route-menu {
             position: fixed; bottom: 60px; left: 20px; background: rgba(15, 23, 42, 0.95); 
-            backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
-            padding: 10px; display: none; flex-direction: column; gap: 8px; z-index: 100;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 250px;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px; display: none; 
+            flex-direction: column; gap: 8px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        
-        .route-option-btn {
-            background: transparent; color: #e2e8f0; border: none; padding: 12px 15px;
-            border-radius: 8px; text-align: left; font-size: 16px; font-weight: 500;
-            cursor: pointer; transition: background 0.2s; border-left: 3px solid transparent;
-        }
-        .route-option-btn:hover { background: rgba(56, 189, 248, 0.15); border-left: 3px solid #38bdf8; }
+        .route-option-btn { background: transparent; color: #e2e8f0; border: none; padding: 10px; text-align: left; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- TOP HEADER -->
     <div class="top-bar">
         <div class="datetime-group">
             <div class="clock-text" id="live-time">00:00</div>
             <div class="date-text" id="live-date">Loading...</div>
         </div>
-        <div class="weather-group" id="weather-header">
-            <!-- Populated by JS -->
-            <span class="weather-item"><span class="weather-icon">⛅</span> Loading...</span>
-        </div>
+        <div class="weather-group" id="weather-header"></div>
     </div>
 
-    <!-- MAIN DASHBOARD -->
     <div class="dashboard-grid">
-        <!-- Left Side: Dynamic KMB -->
+        <!-- Left Side: KMB -->
         <div class="panel">
             <h2 id="bus-header" style="color: var(--accent-bus);">🚍 Loading...</h2>
-            <div class="data-container" id="kmb-data">
-                <div class="data-card"><span class="main-text">Waiting for data...</span></div>
-            </div>
+            <div class="data-container" id="kmb-data"></div>
         </div>
 
-        <!-- Right Side: Free Space! -->
-        <div class="panel" style="border: 2px dashed rgba(255,255,255,0.1); justify-content: center; align-items: center; text-align: center;">
-            <div style="color: var(--text-sub);">
-                <span style="font-size: 40px; display: block; margin-bottom: 10px;">✨</span>
-                <h3>Available Space</h3>
-                <p>Ready for MTR times, secondary bus route, or live HKO Warnings.</p>
+        <!-- Right Side: MTR -->
+        <div class="panel">
+            <h2 style="color: var(--accent-mtr);">🚇 MTR (Lam Tin)</h2>
+            <div class="data-container" id="mtr-data">
+                <div class="data-card"><span class="main-text">Fetching MTR...</span></div>
             </div>
         </div>
     </div>
 
-    <!-- On-Screen Local Menu -->
     <button id="route-toggle-btn" onclick="toggleRouteMenu()">⚲ Change Route</button>
     <div id="route-menu"></div>
 
     <script>
-        // --- CLOCK LOGIC ---
         function updateClock() {
             const now = new Date();
             document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
-        setInterval(updateClock, 1000);
-        updateClock();
+        setInterval(updateClock, 1000); updateClock();
 
-        // --- ROUTE MENU LOGIC ---
-        // Added 'dir' (I for Inbound, O for Outbound) to ensure we filter the correct buses from the stop.
-        // --- ROUTE MENU LOGIC ---
         const predefinedRoutes = [
-            // 215X: Lam Tin (Kwong Tin Estate) to Kowloon Station
             { id: 0, stopId: '215D99B3E2A5F8DD', route: '215X', dir: 'O', desc: 'To Kowloon Station' },
-            
-            // 16: Lam Tin (Kwong Tin Estate) to Mong Kok
             { id: 1, stopId: '92AA28BBE48D6B2E', route: '16',   dir: 'O', desc: 'To Mong Kok' },
-            
-            // 14: Lam Tin Station to China Ferry Terminal
             { id: 2, stopId: '6C6B36F7550907CE', route: '14',   dir: 'O', desc: 'To China Ferry Terminal' },
-            
-            // 603: Lam Tin (North) to Central
             { id: 3, stopId: '9D676B8892807F9D', route: '603',  dir: 'O', desc: 'To Central' }
-        ];        
+        ];
         let currentRouteIndex = 0;
 
         function buildMenu() {
             const menu = document.getElementById('route-menu');
-            menu.innerHTML = '';
             predefinedRoutes.forEach((r, index) => {
                 menu.innerHTML += `<button class="route-option-btn" onclick="selectRoute(${index})">🚍 ${r.route} (${r.desc})</button>`;
             });
         }
-
-        function toggleRouteMenu() {
-            const menu = document.getElementById('route-menu');
-            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
-        }
-
-        function selectRoute(index) {
-            currentRouteIndex = index;
-            toggleRouteMenu();
-            // Show loading state immediately
-            document.getElementById('kmb-data').innerHTML = '<div class="data-card"><span class="main-text">Fetching live data...</span></div>';
-            fetchKMB(); 
-        }
-
-        document.addEventListener('click', function(event) {
-            const menu = document.getElementById('route-menu');
-            const btn = document.getElementById('route-toggle-btn');
-            if (menu.style.display === 'flex' && !menu.contains(event.target) && event.target !== btn) {
-                menu.style.display = 'none';
-            }
-        });
+        function toggleRouteMenu() { document.getElementById('route-menu').style.display = (document.getElementById('route-menu').style.display === 'flex') ? 'none' : 'flex'; }
+        function selectRoute(index) { currentRouteIndex = index; toggleRouteMenu(); fetchKMB(); }
         buildMenu();
 
-        // --- KMB LOGIC ---
         async function fetchKMB() {
             const config = predefinedRoutes[currentRouteIndex];
             document.getElementById('bus-header').innerText = `🚍 ${config.route} ${config.desc}`;
-            
-            // The API endpoint takes stopId, route, and service_type (usually 1).
-            const kmbUrl = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${config.stopId}/${config.route}/1`;
-            
             try {
-                const response = await fetch(kmbUrl);
+                const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${config.stopId}/${config.route}/1`);
                 const result = await response.json();
-                const container = document.getElementById('kmb-data');
-                container.innerHTML = '';
-                
+                const container = document.getElementById('kmb-data'); container.innerHTML = '';
                 if (result.data) {
-                    // CRITICAL FIX: We must filter by the correct direction ('I' or 'O') as provided in our config.
-                    // If we don't filter by direction, the API returns data for the opposite direction which might be empty at this stop!
-                    let validBuses = result.data
-                        .filter(b => b.eta && b.dir === config.dir) 
-                        .sort((a, b) => new Date(a.eta) - new Date(b.eta));
-                        
-                    let seenMins = new Set();
-                    let count = 0;
-
+                    let validBuses = result.data.filter(b => b.eta && b.dir === config.dir).sort((a, b) => new Date(a.eta) - new Date(b.eta));
+                    let seenMins = new Set(); let count = 0;
                     for (let bus of validBuses) {
                         if (count >= 4) break;
                         let diffMins = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
+                        if (seenMins.has(diffMins)) continue; seenMins.add(diffMins);
                         
-                        // Prevent duplicate minutes showing up if multiple service types arrive at the same time
-                        if (seenMins.has(diffMins)) continue; 
-                        seenMins.add(diffMins);
-
-                        let color = 'var(--alert-green)'; 
-                        let displayMins = `${diffMins} <span style="font-size: 0.5em; font-weight: 500;">MIN</span>`;
-                        let animClass = '';
-                        
+                        let color = 'var(--alert-green)'; let displayMins = `${diffMins} <span style="font-size: 0.5em;">MIN</span>`; let animClass = '';
                         if (diffMins <= 2) { color = 'var(--alert-red)'; displayMins = 'Arriving'; animClass = 'is-arriving'; } 
                         else if (diffMins <= 10) { color = 'var(--alert-yellow)'; }
 
@@ -233,31 +160,70 @@
                         </div>`;
                         count++;
                     }
-                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--text-sub)">No scheduled buses</span></div>';
+                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text">No scheduled buses</span></div>';
                 }
-            } catch (e) { document.getElementById('kmb-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">API Connection Error</span></div>'; }
+            } catch (e) {}
         }
 
-        // --- WEATHER LOGIC (Header version) ---
+        // --- NEW MTR LOGIC ---
+        const mtrDests = { 'TKL': 'Tiu Keng Leng', 'WHA': 'Whampoa', 'KWT': 'Kwun Tong', 'HOP': 'Ho Man Tin' };
+        
+        async function fetchMTR() {
+            try {
+                const res = await fetch('https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=KTL&sta=LAT');
+                const data = await res.json();
+                const container = document.getElementById('mtr-data');
+                container.innerHTML = '';
+
+                if (data.status === 1 && data.data['KTL-LAT']) {
+                    const stationData = data.data['KTL-LAT'];
+                    let allTrains = [];
+                    
+                    if(stationData.UP) allTrains = allTrains.concat(stationData.UP);
+                    if(stationData.DOWN) allTrains = allTrains.concat(stationData.DOWN);
+                    
+                    allTrains.sort((a, b) => parseInt(a.ttnt) - parseInt(b.ttnt));
+                    let count = 0;
+
+                    for (let train of allTrains) {
+                        if (count >= 4) break;
+                        let mins = parseInt(train.ttnt);
+                        let color = 'var(--alert-green)'; 
+                        let displayMins = `${mins} <span style="font-size: 0.5em;">MIN</span>`;
+                        let animClass = '';
+                        
+                        if (mins <= 1) { color = 'var(--alert-red)'; displayMins = 'Arriving'; animClass = 'is-arriving'; } 
+                        else if (mins <= 4) { color = 'var(--alert-yellow)'; }
+
+                        container.innerHTML += `
+                        <div class="data-card" style="border-left-color: ${color}">
+                            <div>
+                                <span class="main-text">To ${mtrDests[train.dest] || train.dest}</span>
+                                <span class="sub-text">Platform ${train.plat}</span>
+                            </div>
+                            <span class="highlight-text ${animClass}" style="color: ${color}">${displayMins}</span>
+                        </div>`;
+                        count++;
+                    }
+                }
+            } catch (e) { document.getElementById('mtr-data').innerHTML = '<div class="data-card"><span class="main-text" style="color:var(--alert-red)">MTR API Error</span></div>'; }
+        }
+
         async function fetchWeather() {
             try {
                 const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
                 const wData = await res.json();
-                
                 const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
-                const humidity = wData.humidity ? wData.humidity.data[0].value : '--';
-                const uv = wData.uvindex ? wData.uvindex.data[0].value : '--';
-                
                 document.getElementById('weather-header').innerHTML = `
-                    <div class="weather-item" style="color: #f59e0b;"><span class="weather-icon">🌡️</span> ${ktTemp.value}°C</div>
-                    <div class="weather-item" style="color: #38bdf8;"><span class="weather-icon">💧</span> ${humidity}%</div>
-                    <div class="weather-item" style="color: #a855f7;"><span class="weather-icon">☀️</span> UV: ${uv}</div>
+                    <div class="weather-item" style="color: #f59e0b;"><span style="font-size:1.2em">🌡️</span> ${ktTemp.value}°C</div>
+                    <div class="weather-item" style="color: #38bdf8;"><span style="font-size:1.2em">💧</span> ${wData.humidity.data[0].value}%</div>
                 `;
-            } catch (e) { document.getElementById('weather-header').innerHTML = '<span style="color:var(--alert-red)">Weather Error</span>'; }
+            } catch (e) {}
         }
 
         fetchKMB(); setInterval(fetchKMB, 30000);
-        fetchWeather(); setInterval(fetchWeather, 300000);       
+        fetchMTR(); setInterval(fetchMTR, 30000);
+        fetchWeather(); setInterval(fetchWeather, 300000);
     </script>
 </body>
 </html>
