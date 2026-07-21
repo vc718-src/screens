@@ -145,4 +145,97 @@
         setInterval(updateClock, 1000); updateClock();
 
         // --- BUS MENU LOGIC ---
-        const predefinedRout
+        const predefinedRoutes = [
+            { id: 0, stopId: '215D99B3E2A5F8DD', route: '215X', dir: 'O', desc: 'To Kowloon Station' },
+            { id: 1, stopId: '92AA28BBE48D6B2E', route: '16',   dir: 'O', desc: 'To Mong Kok' },
+            { id: 2, stopId: '6C6B36F7550907CE', route: '14',   dir: 'O', desc: 'To China Ferry Terminal' },
+            { id: 3, stopId: '9D676B8892807F9D', route: '603',  dir: 'O', desc: 'To Central' }
+        ];
+        let currentRouteIndex = 0;
+
+        function buildMenu() {
+            const menu = document.getElementById('route-menu');
+            predefinedRoutes.forEach((r, index) => {
+                menu.innerHTML += `<button class="route-option-btn" onclick="selectRoute(${index})">🚍 ${r.route} (${r.desc})</button>`;
+            });
+        }
+        function toggleRouteMenu() { document.getElementById('route-menu').style.display = (document.getElementById('route-menu').style.display === 'flex') ? 'none' : 'flex'; }
+        function selectRoute(index) { currentRouteIndex = index; toggleRouteMenu(); fetchKMB(); }
+        buildMenu();
+
+        // --- KMB LOGIC ---
+        async function fetchKMB() {
+            const config = predefinedRoutes[currentRouteIndex];
+            document.getElementById('bus-header').innerText = `🚍 ${config.route} ${config.desc}`;
+            try {
+                const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${config.stopId}/${config.route}/1`);
+                const result = await response.json();
+                const container = document.getElementById('kmb-data'); container.innerHTML = '';
+                if (result.data) {
+                    let validBuses = result.data.filter(b => b.eta && b.dir === config.dir).sort((a, b) => new Date(a.eta) - new Date(b.eta));
+                    let seenMins = new Set(); let count = 0;
+                    for (let bus of validBuses) {
+                        if (count >= 4) break;
+                        let diffMins = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
+                        if (seenMins.has(diffMins)) continue; seenMins.add(diffMins);
+                        
+                        let color = 'var(--alert-green)'; let displayMins = `${diffMins} <span style="font-size: 0.5em;">MIN</span>`; let animClass = '';
+                        if (diffMins <= 2) { color = 'var(--alert-red)'; displayMins = 'Arriving'; animClass = 'is-arriving'; } 
+                        else if (diffMins <= 10) { color = 'var(--alert-yellow)'; }
+
+                        container.innerHTML += `
+                        <div class="data-card" style="border-left-color: ${color}">
+                            <div><span class="main-text">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span></div>
+                            <span class="highlight-text ${animClass}" style="color: ${color}">${displayMins}</span>
+                        </div>`;
+                        count++;
+                    }
+                    if(count === 0) container.innerHTML = '<div class="data-card"><span class="main-text">No scheduled buses</span></div>';
+                }
+            } catch (e) {}
+        }
+
+        // --- QUOTE LOGIC (Hourly Refresh) ---
+        async function fetchQuote() {
+            try {
+                const response = await fetch('https://v1.hitokoto.cn/?c=i&c=d&c=k');
+                const data = await response.json();
+                document.getElementById('quote-text').innerText = `「${data.hitokoto}」`;
+                let source = data.from;
+                if (data.from_who) source = `${data.from_who}《${data.from}》`;
+                document.getElementById('quote-author').innerText = `- ${source || "佚名"}`;
+            } catch (e) {
+                document.getElementById('quote-text').innerText = "「讀取金句時發生錯誤。」";
+            }
+        }
+
+        // --- WEATHER LOGIC ---
+        async function fetchWeather() {
+            try {
+                const resWeather = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
+                const wData = await resWeather.json();
+                const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
+                
+                const resWarn = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en');
+                const warnData = await resWarn.json();
+                
+                let warningHtml = '';
+                if (warnData && Object.keys(warnData).length > 0) {
+                    const firstWarning = warnData[Object.keys(warnData)[0]].name;
+                    warningHtml = `<div class="weather-item is-arriving" style="background: rgba(239, 68, 68, 0.2); padding: 5px 12px; border-radius: 8px; font-size: clamp(14px, 2vh, 20px);">⚠️ ${firstWarning}</div>`;
+                }
+
+                document.getElementById('weather-header').innerHTML = `
+                    ${warningHtml}
+                    <div class="weather-item" style="color: #f59e0b;"><span style="font-size:1.2em">🌡️</span> ${ktTemp.value}°C</div>
+                    <div class="weather-item" style="color: #38bdf8;"><span style="font-size:1.2em">💧</span> ${wData.humidity.data[0].value}%</div>
+                `;
+            } catch (e) {}
+        }
+
+        fetchKMB(); setInterval(fetchKMB, 30000);
+        fetchWeather(); setInterval(fetchWeather, 300000);
+        fetchQuote(); setInterval(fetchQuote, 3600000); // 1 hour refresh
+    </script>
+</body>
+</html>
