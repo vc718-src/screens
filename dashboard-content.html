@@ -52,19 +52,21 @@
         /* --- SINGLE LINE HEADER ENFORCEMENT --- */
         .topbar { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 20px; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; 
+            padding: 0 15px; /* Reduced padding */
+            height: 50px; /* Force small height */
+            white-space: nowrap; overflow: hidden; 
         }
 
-        .time-group { display: flex; align-items: baseline; gap: 12px; }
-        #live-time { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
-        #live-date { font-size: 15px; color: var(--text-sub); font-weight: 500; }
+        .time-group { display: flex; align-items: baseline; gap: 10px; }
+        #live-time { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+        #live-date { font-size: 14px; color: var(--text-sub); font-weight: 500; }
         
-        .status-group { display: flex; align-items: center; gap: 15px; font-size: 16px; font-weight: 600; }
+        .status-group { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; }
         
         .warning-badge { 
             background: rgba(239, 68, 68, 0.2); color: var(--alert-red); 
-            padding: 4px 10px; border-radius: 8px; font-size: 14px; 
-            display: none; max-width: 150px; overflow: hidden; text-overflow: ellipsis; 
+            padding: 3px 8px; border-radius: 6px; font-size: 13px; 
+            display: none; max-width: 140px; overflow: hidden; text-overflow: ellipsis; 
         }
 
         /* --- MAIN WEATHER PANEL --- */
@@ -106,12 +108,13 @@
         /* --- FOOTER 7-DAY STRIP --- */
         .forecast-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 10px; }
         .day-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-        .d-name { display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center; line-height: 1.2; }
+        /* Make name a single row flexbox */
+        .d-name { display: flex; flex-direction: row; align-items: baseline; gap: 4px; }
         .d-weekday { font-size: 13px; color: var(--text-main); font-weight: 600; text-transform: uppercase; }
         .d-date { font-size: 11px; color: var(--text-sub); }
-        .d-icon { font-size: 24px; font-family: "Apple Color Emoji", sans-serif; }
-        .d-temp { font-size: 15px; font-weight: 600; }
-
+        .d-icon { font-size: 22px; font-family: "Apple Color Emoji", sans-serif; }
+        .d-temp { font-size: 14px; font-weight: 600; }
+        
         /* Route Menu Dropdown */
         #route-menu { position: fixed; top: 160px; right: 20px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--panel-border); border-radius: 12px; padding: 10px; display: none; flex-direction: column; gap: 8px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         .route-option-btn { background: transparent; color: #e2e8f0; border: none; padding: 10px; text-align: left; font-size: 14px; cursor: pointer; }
@@ -227,13 +230,13 @@
                 const currentIconNum = wData.icon[0];
                 document.getElementById('w-main-icon').innerText = getHkoEmoji(currentIconNum, isNightNow);
 
-                // Populate 7-Day Footer Strip (Guarantee exactly 7 days from index 0)
+                // Populate 7-Day Footer Strip
                 const strip = document.getElementById('forecast-strip');
                 strip.innerHTML = '';
                 for (let i = 0; i < 7; i++) {
                     const day = fData.weatherForecast[i];
-                    const dateStr = day.forecastDate; // e.g., "20260721"
-                    const formattedDate = `${parseInt(dateStr.substring(6, 8))}/${parseInt(dateStr.substring(4, 6))}`; // e.g., "21/7"
+                    const dateStr = day.forecastDate; // e.g., "20260722"
+                    const formattedDate = `${parseInt(dateStr.substring(6, 8))}/${parseInt(dateStr.substring(4, 6))}`; // e.g., "22/7"
                     
                     strip.innerHTML += `
                         <div class="day-card">
