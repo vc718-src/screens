@@ -34,16 +34,11 @@
         .app {
             height: 100vh; padding: 12px; box-sizing: border-box;
             display: grid;
-            grid-template-rows: 60px 1fr 105px; /* Slimmer header & footer to maximize center space */
+            grid-template-rows: 55px 1fr 115px; /* Slim header, slightly taller footer for dates */
             gap: 12px;
         }
 
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1.6fr 1fr; /* Optimized proportion */
-            gap: 12px; min-height: 0;
-        }
-
+        .main-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; min-height: 0; }
         .side-column { display: grid; grid-template-rows: auto 1fr; gap: 12px; }
 
         /* --- PANELS --- */
@@ -54,15 +49,23 @@
             display: flex; flex-direction: column; justify-content: center;
         }
         
-        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        /* --- SINGLE LINE HEADER ENFORCEMENT --- */
+        .topbar { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 20px; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; 
+        }
 
-        /* --- SINGLE LINE HEADER --- */
-        .time-group { display: flex; align-items: baseline; gap: 15px; }
-        #live-time { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
-        #live-date { font-size: 16px; color: var(--text-sub); font-weight: 500; }
+        .time-group { display: flex; align-items: baseline; gap: 12px; }
+        #live-time { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+        #live-date { font-size: 15px; color: var(--text-sub); font-weight: 500; }
         
-        .status-group { display: flex; align-items: center; gap: 20px; font-size: 18px; font-weight: 600; }
-        .warning-badge { background: rgba(239, 68, 68, 0.2); color: var(--alert-red); padding: 4px 10px; border-radius: 8px; font-size: 15px; display: none; }
+        .status-group { display: flex; align-items: center; gap: 15px; font-size: 16px; font-weight: 600; }
+        
+        .warning-badge { 
+            background: rgba(239, 68, 68, 0.2); color: var(--alert-red); 
+            padding: 4px 10px; border-radius: 8px; font-size: 14px; 
+            display: none; max-width: 150px; overflow: hidden; text-overflow: ellipsis; 
+        }
 
         /* --- MAIN WEATHER PANEL --- */
         .weather-panel { justify-content: space-between; }
@@ -103,7 +106,9 @@
         /* --- FOOTER 7-DAY STRIP --- */
         .forecast-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 10px; }
         .day-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-        .d-name { font-size: 13px; color: var(--text-sub); font-weight: 500; text-transform: uppercase; }
+        .d-name { display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center; line-height: 1.2; }
+        .d-weekday { font-size: 13px; color: var(--text-main); font-weight: 600; text-transform: uppercase; }
+        .d-date { font-size: 11px; color: var(--text-sub); }
         .d-icon { font-size: 24px; font-family: "Apple Color Emoji", sans-serif; }
         .d-temp { font-size: 15px; font-weight: 600; }
 
@@ -141,7 +146,6 @@
                         <div class="w-minmax" id="w-uv">UV: --</div>
                     </div>
                 </div>
-                
                 <div class="hourly-row" id="hourly-container"></div>
             </section>
 
@@ -150,7 +154,6 @@
                 <section class="panel bus-panel">
                     <div class="panel-title">
                         <span id="bus-header">🚍 KMB Schedule</span>
-                        <!-- Built-in Route Button -->
                         <button class="route-btn" onclick="toggleRouteMenu()">⚲</button>
                     </div>
                     <div class="bus-list" id="kmb-data">
@@ -184,13 +187,10 @@
         }
         setInterval(updateClock, 1000); updateClock();
 
-        // --- HKO ICON MAPPER WITH NIGHT LOGIC ---
         function getHkoEmoji(iconNum, isNight = false) {
             const num = parseInt(iconNum);
-            // Sun vs Moon depending on time
             if (num >= 50 && num <= 54) return isNight ? '🌙' : '☀️';
             if (num >= 60 && num <= 61) return isNight ? '☁️' : '⛅';
-            // Rain and storms are the same day or night
             if (num >= 62 && num <= 65) return '🌧️'; 
             if (num >= 70 && num <= 77) return '⛈️'; 
             return '☁️';
@@ -222,10 +222,8 @@
                 document.getElementById('w-main-minmax').innerText = `${today.forecastMintemp.value}° / ${today.forecastMaxtemp.value}°`;
                 document.getElementById('w-main-desc').innerText = today.forecastWeather.split('.')[0]; 
 
-                // Check if it's currently night time
                 const currentHour = new Date().getHours();
                 const isNightNow = currentHour >= 19 || currentHour < 6;
-                // Use actual current icon from HKO, with night logic applied
                 const currentIconNum = wData.icon[0];
                 document.getElementById('w-main-icon').innerText = getHkoEmoji(currentIconNum, isNightNow);
 
@@ -234,9 +232,15 @@
                 strip.innerHTML = '';
                 for (let i = 0; i < 7; i++) {
                     const day = fData.weatherForecast[i];
+                    const dateStr = day.forecastDate; // e.g., "20260721"
+                    const formattedDate = `${parseInt(dateStr.substring(6, 8))}/${parseInt(dateStr.substring(4, 6))}`; // e.g., "21/7"
+                    
                     strip.innerHTML += `
                         <div class="day-card">
-                            <div class="d-name">${day.week.substring(0,3)}</div>
+                            <div class="d-name">
+                                <span class="d-weekday">${day.week.substring(0,3)}</span>
+                                <span class="d-date">${formattedDate}</span>
+                            </div>
                             <div class="d-icon">${getHkoEmoji(day.ForecastIcon, false)}</div>
                             <div class="d-temp">${day.forecastMintemp.value}° - ${day.forecastMaxtemp.value}°</div>
                         </div>`;
