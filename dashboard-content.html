@@ -8,7 +8,7 @@
         /* --- CALM DARK THEME --- */
         :root {
             --bg1: #0b1220; --bg2: #111827;
-            --panel: #1e293b; --panel-border: rgba(255, 255, 255, 0.05);
+            --panel: #1e293b; --panel-border: rgba(255, 255, 255, 0.08);
             --text-main: #f8fafc; --text-sub: #94a3b8;
             --accent-cyan: #38bdf8; --accent-amber: #f59e0b;
             --alert-red: #ef4444; --alert-yellow: #facc15; --alert-green: #4ade80;
@@ -30,95 +30,93 @@
             overflow: hidden; transition: all 1s ease;
         }
 
-        /* --- IPAD OPTIMIZED GRID --- */
+        /* --- IPAD 4:3 OPTIMIZED GRID --- */
         .app {
-            height: 100vh; padding: 12px; box-sizing: border-box;
+            height: 100vh; padding: 15px; box-sizing: border-box;
             display: grid;
-            grid-template-rows: 55px 1fr 115px; /* Slim header, slightly taller footer for dates */
-            gap: 12px;
+            grid-template-rows: 65px 1fr 120px; /* Taller header and footer for better breathing room */
+            gap: 15px;
         }
 
-        .main-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; min-height: 0; }
-        .side-column { display: grid; grid-template-rows: auto 1fr; gap: 12px; }
+        .main-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 15px; min-height: 0; }
+        .side-column { display: grid; grid-template-rows: auto 1fr; gap: 15px; }
 
         /* --- PANELS --- */
         .panel {
             background: var(--panel); border: 1px solid var(--panel-border);
-            border-radius: 16px; padding: 15px 20px;
+            border-radius: 18px; padding: 20px 25px; /* More internal padding */
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             display: flex; flex-direction: column; justify-content: center;
         }
         
-        /* --- SINGLE LINE HEADER ENFORCEMENT --- */
+        /* --- ENHANCED HEADER --- */
         .topbar { 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 15px; /* Reduced padding */
-            height: 50px; /* Force small height */
-            white-space: nowrap; overflow: hidden; 
+            padding: 0 25px; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; 
         }
 
-        .time-group { display: flex; align-items: baseline; gap: 10px; }
-        #live-time { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
-        #live-date { font-size: 14px; color: var(--text-sub); font-weight: 500; }
+        .time-group { display: flex; align-items: baseline; gap: 15px; }
+        #live-time { font-size: 38px; font-weight: 800; letter-spacing: -0.5px; margin: 0; } /* Larger clock */
+        #live-date { font-size: 18px; color: var(--text-sub); font-weight: 500; }
         
-        .status-group { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; }
+        .status-group { display: flex; align-items: center; gap: 18px; font-size: 20px; font-weight: 600; } /* Larger status */
         
         .warning-badge { 
             background: rgba(239, 68, 68, 0.2); color: var(--alert-red); 
-            padding: 3px 8px; border-radius: 6px; font-size: 13px; 
-            display: none; max-width: 140px; overflow: hidden; text-overflow: ellipsis; 
+            padding: 5px 12px; border-radius: 8px; font-size: 16px; 
+            display: none; max-width: 180px; overflow: hidden; text-overflow: ellipsis; 
         }
 
-        /* --- MAIN WEATHER PANEL --- */
-        .weather-panel { justify-content: space-between; }
-        .weather-now { display: flex; align-items: center; gap: 15px; height: 130px; }
-        .w-icon-big { font-size: 75px; font-family: "Apple Color Emoji", sans-serif; }
-        .w-current-temp { font-size: 60px; font-weight: 700; line-height: 1; color: var(--text-main); }
-        .w-details { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+        /* --- ENHANCED WEATHER PANEL --- */
+        .weather-panel { justify-content: space-between; padding: 30px; }
+        .weather-now { display: flex; align-items: center; gap: 25px; flex: 1; } /* Uses flex:1 to fill space naturally */
         
+        .w-icon-big { font-size: 100px; font-family: "Apple Color Emoji", sans-serif; line-height: 1; } /* Massive icon */
+        .w-current-temp { font-size: 85px; font-weight: 800; line-height: 1; color: var(--text-main); letter-spacing: -2px; } /* Massive temp */
+        
+        .w-details { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
         .w-desc { 
-            font-size: 22px; font-weight: 500; color: var(--accent-cyan);
+            font-size: 26px; font-weight: 600; color: var(--accent-cyan); /* Larger, bolder text */
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-            overflow: hidden; text-overflow: ellipsis; line-height: 1.2; max-width: 95%;
+            overflow: hidden; text-overflow: ellipsis; line-height: 1.3; max-width: 95%;
         }
-        .w-minmax { font-size: 15px; color: var(--text-sub); }
+        .w-minmax { font-size: 18px; color: var(--text-sub); } /* Slightly larger sub-text */
 
-        .hourly-row { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--panel-border); }
-        .hour-card { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .h-time { font-size: 14px; color: var(--text-sub); }
-        .h-icon { font-size: 26px; font-family: "Apple Color Emoji", sans-serif; margin: 2px 0; }
-        .h-temp { font-size: 18px; font-weight: 600; }
+        .hourly-row { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 20px; border-top: 1px solid var(--panel-border); }
+        .hour-card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .h-time { font-size: 15px; color: var(--text-sub); font-weight: 500;}
+        .h-icon { font-size: 32px; font-family: "Apple Color Emoji", sans-serif; margin: 2px 0; }
+        .h-temp { font-size: 20px; font-weight: 600; }
 
-        /* --- UTILITY PANELS (BUS & QUOTE) --- */
-        .panel-title { display: flex; justify-content: space-between; align-items: center; font-size: 14px; text-transform: uppercase; color: var(--text-sub); font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; }
-        .route-btn { background: transparent; border: none; color: var(--text-sub); font-size: 16px; cursor: pointer; padding: 0 5px; transition: color 0.2s; }
+        /* --- ENHANCED UTILITY PANELS --- */
+        .panel-title { display: flex; justify-content: space-between; align-items: center; font-size: 16px; text-transform: uppercase; color: var(--text-sub); font-weight: 700; letter-spacing: 1px; margin-bottom: 15px; } /* Larger title */
+        .route-btn { background: transparent; border: none; color: var(--text-sub); font-size: 20px; cursor: pointer; padding: 0 5px; transition: color 0.2s; }
         .route-btn:hover { color: var(--text-main); }
 
-        .bus-list { display: flex; flex-direction: column; gap: 8px; }
-        .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(0,0,0,0.2); border-radius: 10px; border-left: 4px solid var(--text-sub); }
+        .bus-list { display: flex; flex-direction: column; gap: 12px; }
+        .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(0,0,0,0.2); border-radius: 12px; border-left: 4px solid var(--text-sub); } /* Taller buttons */
         .bus-item.next { border-left-color: var(--accent-cyan); background: rgba(56, 189, 248, 0.05); }
-        .bus-time { font-size: 15px; font-weight: 500; }
-        .bus-min { font-size: 20px; font-weight: 700; color: var(--accent-cyan); }
+        .bus-time { font-size: 17px; font-weight: 600; }
+        .bus-min { font-size: 22px; font-weight: 800; color: var(--accent-cyan); }
         .bus-item.urgent .bus-min { color: var(--alert-red); }
 
-        .quote-panel { justify-content: center; text-align: center; padding: 15px; }
-        #quote-text { font-size: 20px; line-height: 1.5; font-family: "Microsoft JhengHei", sans-serif; color: var(--text-main); }
-        #quote-author { font-size: 14px; color: var(--text-sub); margin-top: 10px; font-family: "Microsoft JhengHei", sans-serif; }
+        /* Centered Quote */
+        .quote-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 25px; flex: 1; }
+        #quote-text { font-size: 24px; line-height: 1.6; font-weight: 500; font-family: "Microsoft JhengHei", sans-serif; color: var(--text-main); letter-spacing: 1px; } /* Larger, spaced characters */
+        #quote-author { font-size: 16px; color: var(--text-sub); margin-top: 15px; font-family: "Microsoft JhengHei", sans-serif; }
 
-        /* --- FOOTER 7-DAY STRIP --- */
-        .forecast-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 10px; }
-        .day-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-        /* Make name a single row flexbox */
-        .d-name { display: flex; flex-direction: row; align-items: baseline; gap: 4px; }
-        .d-weekday { font-size: 13px; color: var(--text-main); font-weight: 600; text-transform: uppercase; }
-        .d-date { font-size: 11px; color: var(--text-sub); }
-        .d-icon { font-size: 22px; font-family: "Apple Color Emoji", sans-serif; }
-        .d-temp { font-size: 14px; font-weight: 600; }
-        
-        /* Route Menu Dropdown */
+        /* --- ENHANCED 7-DAY STRIP --- */
+        .forecast-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; }
+        .day-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+        .d-name { display: flex; flex-direction: row; align-items: baseline; gap: 6px; }
+        .d-weekday { font-size: 15px; color: var(--text-main); font-weight: 700; text-transform: uppercase; }
+        .d-date { font-size: 13px; color: var(--text-sub); font-weight: 500;}
+        .d-icon { font-size: 28px; font-family: "Apple Color Emoji", sans-serif; }
+        .d-temp { font-size: 16px; font-weight: 600; }
+
         #route-menu { position: fixed; top: 160px; right: 20px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--panel-border); border-radius: 12px; padding: 10px; display: none; flex-direction: column; gap: 8px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .route-option-btn { background: transparent; color: #e2e8f0; border: none; padding: 10px; text-align: left; font-size: 14px; cursor: pointer; }
-    </style>
+        .route-option-btn { background: transparent; color: #e2e8f0; border: none; padding: 10px; text-align: left; font-size: 16px; cursor: pointer; }
+    </style>   
 </head>
 <body>
 
