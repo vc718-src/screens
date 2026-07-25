@@ -15,8 +15,7 @@
         }
 
         body.night-mode {
-            --bg1: #000000; --bg2: #050505;
-            --panel: #0f0f0f;
+            --bg1: #000000; --bg2: #050505; --panel: #0f0f0f;
             --text-main: #d97706; --text-sub: #92400e;
             --accent-cyan: #d97706; --accent-amber: #b45309;
             filter: brightness(0.7);
@@ -25,110 +24,94 @@
         body {
             margin: 0; padding: 0; box-sizing: border-box;
             background: linear-gradient(160deg, var(--bg1), var(--bg2));
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text-main); font-family: -apple-system, sans-serif;
             overflow: hidden; transition: all 1s ease;
         }
 
-        /* --- IPAD 4:3 OPTIMIZED GRID --- */
-        .app {
-            height: 100vh; padding: 15px; box-sizing: border-box;
-            display: grid;
-            grid-template-rows: 65px 1fr 120px; /* Taller header and footer for better breathing room */
-            gap: 15px;
-        }
-
+        /* --- IPAD 4:3 GRID --- */
+        .app { height: 100vh; padding: 15px; box-sizing: border-box; display: grid; grid-template-rows: 65px 1fr 130px; gap: 15px; }
         .main-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 15px; min-height: 0; }
         .side-column { display: grid; grid-template-rows: auto 1fr; gap: 15px; }
 
         /* --- PANELS --- */
-        .panel {
-            background: var(--panel); border: 1px solid var(--panel-border);
-            border-radius: 18px; padding: 20px 25px; /* More internal padding */
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            display: flex; flex-direction: column; justify-content: center;
-        }
+        .panel { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 18px; padding: 20px 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: center; }
         
-        /* --- ENHANCED HEADER --- */
-        .topbar { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 25px; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; 
-        }
-
-        .time-group { display: flex; align-items: baseline; gap: 15px; }
-        #live-time { font-size: 38px; font-weight: 800; letter-spacing: -0.5px; margin: 0; } /* Larger clock */
-        #live-date { font-size: 18px; color: var(--text-sub); font-weight: 500; }
+        /* --- ENHANCED HEADER WITH MARQUEE --- */
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0 25px; flex-wrap: nowrap; overflow: hidden; }
+        .time-group { display: flex; align-items: baseline; gap: 15px; flex-shrink: 0; }
+        #live-time { font-size: 40px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
+        #live-date { font-size: 20px; color: var(--text-sub); font-weight: 500; }
         
-        .status-group { display: flex; align-items: center; gap: 18px; font-size: 20px; font-weight: 600; } /* Larger status */
+        .status-group { display: flex; align-items: center; gap: 18px; font-size: 22px; font-weight: 600; overflow: hidden; }
+        .warning-container { display: none; max-width: 250px; overflow: hidden; white-space: nowrap; background: rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 6px 12px; }
         
-        .warning-badge { 
-            background: rgba(239, 68, 68, 0.2); color: var(--alert-red); 
-            padding: 5px 12px; border-radius: 8px; font-size: 16px; 
-            display: none; max-width: 180px; overflow: hidden; text-overflow: ellipsis; 
-        }
+        /* Auto-scrolling text for long warnings */
+        .warning-badge { display: inline-block; color: var(--alert-red); font-size: 18px; }
+        .marquee { animation: scroll 8s linear infinite; }
+        @keyframes scroll { 0% { transform: translateX(10%); } 100% { transform: translateX(-100%); } }
 
-        /* --- ENHANCED WEATHER PANEL --- */
-        .weather-panel { justify-content: space-between; padding: 30px; }
-        .weather-now { display: flex; align-items: center; gap: 25px; flex: 1; } /* Uses flex:1 to fill space naturally */
+        /* --- WEATHER PANEL --- */
+        .weather-panel { justify-content: space-between; padding: 35px; }
+        .weather-now { display: flex; align-items: center; gap: 30px; flex: 1; }
         
-        .w-icon-big { font-size: 100px; font-family: "Apple Color Emoji", sans-serif; line-height: 1; } /* Massive icon */
-        .w-current-temp { font-size: 85px; font-weight: 800; line-height: 1; color: var(--text-main); letter-spacing: -2px; } /* Massive temp */
+        .w-icon-big { font-size: 120px; font-family: "Apple Color Emoji", sans-serif; line-height: 1; }
+        .w-current-temp { font-size: 90px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
         
-        .w-details { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
-        .w-desc { 
-            font-size: 26px; font-weight: 600; color: var(--accent-cyan); /* Larger, bolder text */
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-            overflow: hidden; text-overflow: ellipsis; line-height: 1.3; max-width: 95%;
-        }
-        .w-minmax { font-size: 18px; color: var(--text-sub); } /* Slightly larger sub-text */
+        .w-details { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+        .w-desc { font-size: 28px; font-weight: 600; color: var(--accent-cyan); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+        .w-minmax { font-size: 20px; color: var(--text-sub); }
 
-        .hourly-row { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 20px; border-top: 1px solid var(--panel-border); }
-        .hour-card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .h-time { font-size: 15px; color: var(--text-sub); font-weight: 500;}
-        .h-icon { font-size: 32px; font-family: "Apple Color Emoji", sans-serif; margin: 2px 0; }
-        .h-temp { font-size: 20px; font-weight: 600; }
+        .hourly-row { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 25px; border-top: 1px solid var(--panel-border); }
+        .hour-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .h-time { font-size: 18px; color: var(--text-sub); font-weight: 500;}
+        .h-icon { font-size: 40px; font-family: "Apple Color Emoji", sans-serif; margin: 5px 0; }
+        .h-temp { font-size: 24px; font-weight: 700; }
 
-        /* --- ENHANCED UTILITY PANELS --- */
-        .panel-title { display: flex; justify-content: space-between; align-items: center; font-size: 16px; text-transform: uppercase; color: var(--text-sub); font-weight: 700; letter-spacing: 1px; margin-bottom: 15px; } /* Larger title */
-        .route-btn { background: transparent; border: none; color: var(--text-sub); font-size: 20px; cursor: pointer; padding: 0 5px; transition: color 0.2s; }
-        .route-btn:hover { color: var(--text-main); }
+        /* --- WEATHER CSS ANIMATIONS --- */
+        .anim-sun { display: inline-block; animation: spin 15s linear infinite; }
+        .anim-cloud { display: inline-block; animation: float 4s ease-in-out infinite; }
+        .anim-rain { display: inline-block; animation: shake 2s ease-in-out infinite; }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 
-        .bus-list { display: flex; flex-direction: column; gap: 12px; }
-        .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(0,0,0,0.2); border-radius: 12px; border-left: 4px solid var(--text-sub); } /* Taller buttons */
+        /* --- UTILITY PANELS --- */
+        .panel-title { display: flex; justify-content: space-between; align-items: center; font-size: 18px; text-transform: uppercase; color: var(--text-sub); font-weight: 700; margin-bottom: 15px; }
+        .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.2); border-radius: 12px; border-left: 4px solid var(--text-sub); margin-bottom: 12px;}
         .bus-item.next { border-left-color: var(--accent-cyan); background: rgba(56, 189, 248, 0.05); }
-        .bus-time { font-size: 17px; font-weight: 600; }
-        .bus-min { font-size: 22px; font-weight: 800; color: var(--accent-cyan); }
+        .bus-time { font-size: 20px; font-weight: 600; }
+        .bus-min { font-size: 26px; font-weight: 800; color: var(--accent-cyan); }
         .bus-item.urgent .bus-min { color: var(--alert-red); }
 
-        /* Centered Quote */
-        .quote-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 25px; flex: 1; }
-        #quote-text { font-size: 24px; line-height: 1.6; font-weight: 500; font-family: "Microsoft JhengHei", sans-serif; color: var(--text-main); letter-spacing: 1px; } /* Larger, spaced characters */
-        #quote-author { font-size: 16px; color: var(--text-sub); margin-top: 15px; font-family: "Microsoft JhengHei", sans-serif; }
+        .quote-panel { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; flex: 1; }
+        #quote-text { font-size: 28px; line-height: 1.6; font-weight: 500; font-family: "Microsoft JhengHei", sans-serif; letter-spacing: 2px; }
+        #quote-author { font-size: 18px; color: var(--text-sub); margin-top: 15px; }
 
-        /* --- ENHANCED 7-DAY STRIP --- */
+        /* --- 7-DAY STRIP --- */
         .forecast-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; }
-        .day-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
-        .d-name { display: flex; flex-direction: row; align-items: baseline; gap: 6px; }
-        .d-weekday { font-size: 15px; color: var(--text-main); font-weight: 700; text-transform: uppercase; }
-        .d-date { font-size: 13px; color: var(--text-sub); font-weight: 500;}
-        .d-icon { font-size: 28px; font-family: "Apple Color Emoji", sans-serif; }
-        .d-temp { font-size: 16px; font-weight: 600; }
-
-        #route-menu { position: fixed; top: 160px; right: 20px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--panel-border); border-radius: 12px; padding: 10px; display: none; flex-direction: column; gap: 8px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .route-option-btn { background: transparent; color: #e2e8f0; border: none; padding: 10px; text-align: left; font-size: 16px; cursor: pointer; }
-    </style>   
+        .day-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+        .d-name { display: flex; flex-direction: row; align-items: baseline; gap: 8px; }
+        .d-weekday { font-size: 18px; color: var(--text-main); font-weight: 700; }
+        .d-date { font-size: 15px; color: var(--text-sub); font-weight: 500;}
+        .d-icon { font-size: 35px; font-family: "Apple Color Emoji", sans-serif; }
+        .d-temp { font-size: 18px; font-weight: 600; }
+    </style>
 </head>
 <body>
 
     <div class="app">
-        <!-- SINGLE LINE HEADER -->
+        <!-- HEADER -->
         <header class="panel topbar">
             <div class="time-group">
                 <div id="live-time">00:00</div>
                 <div id="live-date">Loading...</div>
             </div>
             <div class="status-group">
-                <div class="warning-badge" id="warning-badge">⚠️ Warning</div>
+                <!-- Scrolling Warning Container -->
+                <div class="warning-container" id="warning-container">
+                    <div class="warning-badge" id="warning-badge">⚠️ Warning</div>
+                </div>
                 <div style="color: var(--accent-amber);" id="header-temp">--°C</div>
                 <div style="color: var(--accent-cyan);" id="header-hum">--%</div>
             </div>
@@ -136,7 +119,6 @@
 
         <!-- MAIN GRID -->
         <main class="main-grid">
-            <!-- WEATHER PANEL -->
             <section class="panel weather-panel">
                 <div class="weather-now">
                     <div class="w-icon-big" id="w-main-icon">⛅</div>
@@ -150,18 +132,11 @@
                 <div class="hourly-row" id="hourly-container"></div>
             </section>
 
-            <!-- SIDE UTILITIES -->
             <aside class="side-column">
-                <section class="panel bus-panel">
-                    <div class="panel-title">
-                        <span id="bus-header">🚍 KMB Schedule</span>
-                        <button class="route-btn" onclick="toggleRouteMenu()">⚲</button>
-                    </div>
-                    <div class="bus-list" id="kmb-data">
-                        <div class="bus-item"><span class="bus-time">Loading...</span></div>
-                    </div>
+                <section class="panel">
+                    <div class="panel-title">🚍 <span id="bus-header">215X</span></div>
+                    <div id="kmb-data"><div class="bus-item"><span class="bus-time">Loading...</span></div></div>
                 </section>
-
                 <section class="panel quote-panel">
                     <div id="quote-text">載入中...</div>
                     <div id="quote-author">-</div>
@@ -169,54 +144,61 @@
             </aside>
         </main>
 
-        <!-- 7-DAY STRIP -->
         <footer class="panel forecast-strip" id="forecast-strip"></footer>
     </div>
-
-    <!-- Dropdown Menu -->
-    <div id="route-menu"></div>
 
     <script>
         function updateClock() {
             const now = new Date();
             document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-            
-            const hour = now.getHours();
-            if (hour >= 23 || hour < 6) document.body.classList.add('night-mode');
-            else document.body.classList.remove('night-mode');
+            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
         setInterval(updateClock, 1000); updateClock();
 
-        function getHkoEmoji(iconNum, isNight = false) {
+        // Assigns CSS animation classes to specific weather types
+        function getHkoEmojiAnim(iconNum, isNight = false) {
             const num = parseInt(iconNum);
-            if (num >= 50 && num <= 54) return isNight ? '🌙' : '☀️';
-            if (num >= 60 && num <= 61) return isNight ? '☁️' : '⛅';
-            if (num >= 62 && num <= 65) return '🌧️'; 
-            if (num >= 70 && num <= 77) return '⛈️'; 
-            return '☁️';
+            if (num >= 50 && num <= 54) return isNight ? '<span class="anim-sun">🌙</span>' : '<span class="anim-sun">☀️</span>';
+            if (num >= 60 && num <= 61) return isNight ? '<span class="anim-cloud">☁️</span>' : '<span class="anim-cloud">⛅</span>';
+            if (num >= 62 && num <= 65) return '<span class="anim-rain">🌧️</span>'; 
+            if (num >= 70 && num <= 77) return '<span class="anim-rain">⛈️</span>'; 
+            return '<span class="anim-cloud">☁️</span>';
         }
+
+        // Warning Priority Logic (Ensures Typhoons/Rainstorms beat Fire/Thunderstorm warnings)
+        const warningPriority = ['WTCSGNL', 'WRAIN', 'WFNTSA', 'WL', 'WTS', 'WHOT', 'WCOLD', 'WMSGNL', 'WFIRE', 'WFROST'];
 
         async function fetchWeather() {
             try {
                 const resCurrent = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
                 const wData = await resCurrent.json();
                 const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
-                const uv = wData.uvindex ? wData.uvindex.data[0].value : '--';
-                
                 document.getElementById('header-temp').innerText = `${ktTemp.value}°C`;
                 document.getElementById('header-hum').innerText = `${wData.humidity.data[0].value}%`;
                 document.getElementById('w-main-temp').innerText = `${ktTemp.value}°`;
-                document.getElementById('w-uv').innerText = `UV Index: ${uv}`;
+                document.getElementById('w-uv').innerText = `UV: ${wData.uvindex ? wData.uvindex.data[0].value : '--'}`;
 
+                // Priority Warning System
                 const resWarn = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en');
                 const warnData = await resWarn.json();
-                const badge = document.getElementById('warning-badge');
+                const wContainer = document.getElementById('warning-container');
+                const wBadge = document.getElementById('warning-badge');
+                
                 if (warnData && Object.keys(warnData).length > 0) {
-                    badge.innerText = `⚠️ ${warnData[Object.keys(warnData)[0]].name}`;
-                    badge.style.display = 'block';
-                } else { badge.style.display = 'none'; }
+                    let highestPriorityCode = Object.keys(warnData)[0]; 
+                    for (let code of warningPriority) {
+                        if (warnData[code]) { highestPriorityCode = code; break; }
+                    }
+                    
+                    const warningName = warnData[highestPriorityCode].name;
+                    wBadge.innerText = `⚠️ ${warningName}`;
+                    wContainer.style.display = 'block';
+                    
+                    if (warningName.length > 15) { wBadge.classList.add('marquee'); } 
+                    else { wBadge.classList.remove('marquee'); }
+                } else { wContainer.style.display = 'none'; }
 
+                // 9-Day Forecast
                 const resForecast = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en');
                 const fData = await resForecast.json();
                 const today = fData.weatherForecast[0];
@@ -225,111 +207,56 @@
 
                 const currentHour = new Date().getHours();
                 const isNightNow = currentHour >= 19 || currentHour < 6;
-                const currentIconNum = wData.icon[0];
-                document.getElementById('w-main-icon').innerText = getHkoEmoji(currentIconNum, isNightNow);
+                document.getElementById('w-main-icon').innerHTML = getHkoEmojiAnim(wData.icon[0], isNightNow);
 
-                // Populate 7-Day Footer Strip
-                const strip = document.getElementById('forecast-strip');
-                strip.innerHTML = '';
+                // Strip
+                const strip = document.getElementById('forecast-strip'); strip.innerHTML = '';
                 for (let i = 0; i < 7; i++) {
                     const day = fData.weatherForecast[i];
-                    const dateStr = day.forecastDate; // e.g., "20260722"
-                    const formattedDate = `${parseInt(dateStr.substring(6, 8))}/${parseInt(dateStr.substring(4, 6))}`; // e.g., "22/7"
-                    
-                    strip.innerHTML += `
-                        <div class="day-card">
-                            <div class="d-name">
-                                <span class="d-weekday">${day.week.substring(0,3)}</span>
-                                <span class="d-date">${formattedDate}</span>
-                            </div>
-                            <div class="d-icon">${getHkoEmoji(day.ForecastIcon, false)}</div>
-                            <div class="d-temp">${day.forecastMintemp.value}° - ${day.forecastMaxtemp.value}°</div>
-                        </div>`;
+                    const dateStr = day.forecastDate;
+                    const fDate = `${parseInt(dateStr.substring(6, 8))}/${parseInt(dateStr.substring(4, 6))}`;
+                    strip.innerHTML += `<div class="day-card"><div class="d-name"><span class="d-weekday">${day.week.substring(0,3)}</span><span class="d-date">${fDate}</span></div><div class="d-icon">${getHkoEmojiAnim(day.ForecastIcon, false)}</div><div class="d-temp">${day.forecastMintemp.value}° - ${day.forecastMaxtemp.value}°</div></div>`;
                 }
 
-                const hourlyCont = document.getElementById('hourly-container');
-                hourlyCont.innerHTML = '';
-                let baseTemp = ktTemp.value;
-
+                // Hourly
+                const hourlyCont = document.getElementById('hourly-container'); hourlyCont.innerHTML = '';
                 for (let i = 1; i <= 5; i++) {
                     let displayHour = (currentHour + (i * 2)) % 24; 
                     let ampm = displayHour >= 12 ? 'PM' : 'AM';
                     let h12 = displayHour % 12 || 12;
-                    let timeStr = i === 5 ? 'TMRW' : `${h12} ${ampm}`;
-                    
                     let isHourNight = displayHour >= 19 || displayHour < 6;
-                    let modTemp = baseTemp + (displayHour > 8 && displayHour < 16 ? 1 : -1);
-                    
-                    hourlyCont.innerHTML += `
-                        <div class="hour-card">
-                            <div class="h-time">${timeStr}</div>
-                            <div class="h-icon">${getHkoEmoji(currentIconNum, isHourNight)}</div>
-                            <div class="h-temp">${modTemp}°</div>
-                        </div>`;
+                    hourlyCont.innerHTML += `<div class="hour-card"><div class="h-time">${i===5?'TMRW':h12+' '+ampm}</div><div class="h-icon">${getHkoEmojiAnim(wData.icon[0], isHourNight)}</div><div class="h-temp">${ktTemp.value + (displayHour > 8 && displayHour < 16 ? 1 : -1)}°</div></div>`;
                 }
             } catch (e) {}
         }
-
-        // --- BUS ---
-        const predefinedRoutes = [
-            { id: 0, stopId: '215D99B3E2A5F8DD', route: '215X', dir: 'O', desc: 'To Kowloon' },
-            { id: 1, stopId: '92AA28BBE48D6B2E', route: '16',   dir: 'O', desc: 'To Mong Kok' },
-            { id: 2, stopId: '6C6B36F7550907CE', route: '14',   dir: 'O', desc: 'To China Ferry' },
-            { id: 3, stopId: '9D676B8892807F9D', route: '603',  dir: 'O', desc: 'To Central' }
-        ];
-        let currentRouteIndex = 0;
-
-        function buildMenu() {
-            const menu = document.getElementById('route-menu');
-            predefinedRoutes.forEach((r, index) => {
-                menu.innerHTML += `<button class="route-option-btn" onclick="selectRoute(${index})">🚍 ${r.route} ${r.desc}</button>`;
-            });
-        }
-        function toggleRouteMenu() { document.getElementById('route-menu').style.display = (document.getElementById('route-menu').style.display === 'flex') ? 'none' : 'flex'; }
-        function selectRoute(index) { currentRouteIndex = index; toggleRouteMenu(); fetchKMB(); }
-        buildMenu();
 
         async function fetchKMB() {
-            const config = predefinedRoutes[currentRouteIndex];
-            document.getElementById('bus-header').innerText = `🚍 ${config.route}`;
             try {
-                const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${config.stopId}/${config.route}/1`);
+                const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/215D99B3E2A5F8DD/215X/1`);
                 const result = await response.json();
                 const container = document.getElementById('kmb-data'); container.innerHTML = '';
-                
                 if (result.data) {
-                    let validBuses = result.data.filter(b => b.eta && b.dir === config.dir).sort((a, b) => new Date(a.eta) - new Date(b.eta));
-                    let seenMins = new Set(); let count = 0;
+                    let validBuses = result.data.filter(b => b.eta && b.dir === 'O').sort((a, b) => new Date(a.eta) - new Date(b.eta));
+                    let count = 0; let seen = new Set();
                     for (let bus of validBuses) {
-                        if (count >= 3) break; 
-                        let diffMins = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
-                        if (seenMins.has(diffMins)) continue; seenMins.add(diffMins);
-                        
-                        let displayMins = `${diffMins}m`; let cls = count === 0 ? 'next' : '';
-                        if (diffMins <= 2) { displayMins = 'Arr'; cls += ' urgent'; }
-
-                        container.innerHTML += `
-                        <div class="bus-item ${cls}">
-                            <span class="bus-time">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span>
-                            <span class="bus-min">${displayMins}</span>
-                        </div>`;
+                        if (count >= 2) break; 
+                        let diff = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
+                        if (seen.has(diff)) continue; seen.add(diff);
+                        let cls = count === 0 ? 'next' : ''; if (diff <= 2) cls += ' urgent';
+                        container.innerHTML += `<div class="bus-item ${cls}"><span class="bus-time">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span><span class="bus-min">${diff <= 2 ? 'Arr' : diff+'m'}</span></div>`;
                         count++;
                     }
-                    if(count === 0) container.innerHTML = '<div class="bus-item"><span class="bus-time">No buses</span></div>';
                 }
             } catch (e) {}
         }
 
-        // --- QUOTE ---
         async function fetchQuote() {
             try {
                 const response = await fetch('https://v1.hitokoto.cn/?c=i&c=d&c=k', { headers: { 'Accept': 'application/json' }});
                 const data = await response.json();
                 document.getElementById('quote-text').innerText = `「${data.hitokoto}」`;
                 document.getElementById('quote-author').innerText = `- ${data.from_who || data.from || "佚名"}`;
-            } catch (e) {
-                document.getElementById('quote-text').innerText = "「千里之行，始於足下。」"; document.getElementById('quote-author').innerText = "- 老子";
-            }
+            } catch (e) {}
         }
 
         fetchWeather(); fetchKMB(); fetchQuote(); 
