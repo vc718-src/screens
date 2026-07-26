@@ -139,134 +139,186 @@
         <footer class="panel forecast-strip" id="forecast-strip"></footer>
     </div>
 
-    <script>
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-            document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        }
-        setInterval(updateClock, 1000); updateClock();
+  <script>
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', {
+            hour: '2-digit', minute: '2-digit', hour12: false
+        });
+        document.getElementById('live-date').innerText = now.toLocaleDateString('en-US', {
+            weekday: 'short', month: 'short', day: 'numeric'
+        });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-        function getHkoEmojiAnim(iconNum, isNight = false) {
-            const num = parseInt(iconNum);
-            if (num >= 50 && num <= 54) return isNight ? '<span class="anim-sun">🌙</span>' : '<span class="anim-sun">☀️</span>';
-            if (num >= 60 && num <= 61) return isNight ? '<span class="anim-cloud">☁️</span>' : '<span class="anim-cloud">⛅</span>';
-            if (num >= 62 && num <= 65) return '<span class="anim-rain">🌧️</span>'; 
-            if (num >= 70 && num <= 77) return '<span class="anim-rain">⛈️</span>'; 
-            return '<span class="anim-cloud">☁️</span>';
-        }
+    function getHkoEmojiAnim(iconNum, isNight = false) {
+        const num = parseInt(iconNum);
+        if (num >= 50 && num <= 54) return isNight ? '<span class="anim-sun">🌙</span>' : '<span class="anim-sun">☀️</span>';
+        if (num >= 60 && num <= 61) return isNight ? '<span class="anim-cloud">☁️</span>' : '<span class="anim-cloud">⛅</span>';
+        if (num >= 62 && num <= 65) return '<span class="anim-rain">🌧️</span>';
+        if (num >= 70 && num <= 77) return '<span class="anim-rain">⛈️</span>';
+        return '<span class="anim-cloud">☁️</span>';
+    }
 
-        const warningPriority = ['WTCSGNL', 'WRAIN', 'WFNTSA', 'WL', 'WTS', 'WHOT', 'WCOLD', 'WMSGNL', 'WFIRE', 'WFROST'];
+    const warningPriority = ['WTCSGNL', 'WRAIN', 'WFNTSA', 'WL', 'WTS', 'WHOT', 'WCOLD', 'WMSGNL', 'WFIRE', 'WFROST'];
 
-        // Updated to a more reliable proxy
-        const corsProxy = 'https://api.codetabs.com/v1/proxy/?quest=';
+    async function fetchJsonWithFallback(url) {
+        const attempts = [
+            url,
+            'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
+            'https://corsproxy.io/?url=' + encodeURIComponent(url)
+        ];
 
-        async function fetchWeather() {
+        let lastError;
+        for (const attempt of attempts) {
             try {
-                const resCurrent = await fetch(corsProxy + encodeURIComponent('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en'));
-                const wData = await resCurrent.json();
-                const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
-                document.getElementById('header-temp').innerText = `${ktTemp.value}°C`;
-                document.getElementById('header-hum').innerText = `${wData.humidity.data[0].value}%`;
-                document.getElementById('w-main-temp').innerText = `${ktTemp.value}°`;
-                document.getElementById('w-uv').innerText = `UV: ${wData.uvindex ? wData.uvindex.data[0].value : '--'}`;
-
-                const resWarn = await fetch(corsProxy + encodeURIComponent('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en'));
-                const warnData = await resWarn.json();
-                const wContainer = document.getElementById('warning-container');
-                const wBadge = document.getElementById('warning-badge');
-                const normalWeatherHeader = document.getElementById('normal-weather-header');
-                
-                if (warnData && Object.keys(warnData).length > 0) {
-                    let highestPriorityCode = null;
-                    
-                    for (let code of warningPriority) {
-                        if (warnData[code]) { highestPriorityCode = code; break; }
-                    }
-                    
-                    if (highestPriorityCode) {
-                        const warningName = warnData[highestPriorityCode].name;
-                        wBadge.innerText = `⚠️ ${warningName}`;
-                        normalWeatherHeader.style.display = 'none';
-                        wContainer.style.display = 'block';
-                        if (warningName.length > 20) { wBadge.classList.add('marquee'); } 
-                        else { wBadge.classList.remove('marquee'); }
-                    } else {
-                        normalWeatherHeader.style.display = 'flex';
-                        wContainer.style.display = 'none';
-                    }
-                } else { 
-                    normalWeatherHeader.style.display = 'flex';
-                    wContainer.style.display = 'none'; 
-                }
-
-                const resForecast = await fetch(corsProxy + encodeURIComponent('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en'));
-                const fData = await resForecast.json();
-                const today = fData.weatherForecast[0];
-                document.getElementById('w-main-minmax').innerText = `${today.forecastMintemp.value}° / ${today.forecastMaxtemp.value}°`;
-                document.getElementById('w-main-desc').innerText = today.forecastWeather.split('.')[0]; 
-
-                const currentHour = new Date().getHours();
-                const isNightNow = currentHour >= 19 || currentHour < 6;
-                document.getElementById('w-main-icon').innerHTML = getHkoEmojiAnim(wData.icon[0], isNightNow);
-
-                const strip = document.getElementById('forecast-strip'); strip.innerHTML = '';
-                for (let i = 0; i < 7; i++) {
-                    const day = fData.weatherForecast[i];
-                    const dateStr = day.forecastDate;
-                    const fDate = `${parseInt(dateStr.substring(6, 8))}/${parseInt(dateStr.substring(4, 6))}`;
-                    strip.innerHTML += `<div class="day-card"><div class="d-name"><span class="d-weekday">${day.week.substring(0,3)}</span><span class="d-date">${fDate}</span></div><div class="d-icon">${getHkoEmojiAnim(day.ForecastIcon, false)}</div><div class="d-temp">${day.forecastMintemp.value}° - ${day.forecastMaxtemp.value}°</div></div>`;
-                }
-
-                const hourlyCont = document.getElementById('hourly-container'); hourlyCont.innerHTML = '';
-                for (let i = 1; i <= 5; i++) {
-                    let displayHour = (currentHour + (i * 2)) % 24; 
-                    let ampm = displayHour >= 12 ? 'PM' : 'AM';
-                    let h12 = displayHour % 12 || 12;
-                    let isHourNight = displayHour >= 19 || displayHour < 6;
-                    hourlyCont.innerHTML += `<div class="hour-card"><div class="h-time">${i===5?'TMRW':h12+' '+ampm}</div><div class="h-icon">${getHkoEmojiAnim(wData.icon[0], isHourNight)}</div><div class="h-temp">${ktTemp.value + (displayHour > 8 && displayHour < 16 ? 1 : -1)}°</div></div>`;
-                }
+                const res = await fetch(attempt, { cache: 'no-store' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return await res.json();
             } catch (e) {
-                console.error("Weather API Error: ", e);
+                lastError = e;
             }
         }
+        throw lastError;
+    }
 
-        async function fetchKMB() {
-            try {
-                const response = await fetch(corsProxy + encodeURIComponent(`https://data.etabus.gov.hk/v1/transport/kmb/eta/215D99B3E2A5F8DD/215X/1`));
-                const result = await response.json();
-                const container = document.getElementById('kmb-data'); container.innerHTML = '';
-                if (result.data) {
-                    let validBuses = result.data.filter(b => b.eta && b.dir === 'O').sort((a, b) => new Date(a.eta) - new Date(b.eta));
-                    let count = 0; let seen = new Set();
-                    for (let bus of validBuses) {
-                        if (count >= 2) break; 
-                        let diff = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
-                        if (seen.has(diff)) continue; seen.add(diff);
-                        let cls = count === 0 ? 'next' : ''; if (diff <= 2) cls += ' urgent';
-                        container.innerHTML += `<div class="bus-item ${cls}"><span class="bus-time">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span><span class="bus-min">${diff <= 2 ? 'Arr' : diff+'m'}</span></div>`;
-                        count++;
-                    }
+    async function fetchWeather() {
+        try {
+            const wData = await fetchJsonWithFallback('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
+            const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
+
+            document.getElementById('header-temp').innerText = `${ktTemp.value}°C`;
+            document.getElementById('header-hum').innerText = `${wData.humidity.data[0].value}%`;
+            document.getElementById('w-main-temp').innerText = `${ktTemp.value}°`;
+            document.getElementById('w-uv').innerText = `UV: ${wData.uvindex ? wData.uvindex.data[0].value : '--'}`;
+
+            const warnData = await fetchJsonWithFallback('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en');
+            const wContainer = document.getElementById('warning-container');
+            const wBadge = document.getElementById('warning-badge');
+            const normalWeatherHeader = document.getElementById('normal-weather-header');
+
+            let highestPriorityCode = null;
+            for (const code of warningPriority) {
+                if (warnData[code]) {
+                    highestPriorityCode = code;
+                    break;
                 }
-            } catch (e) {
-                console.error("KMB API Error: ", e);
             }
-        }
 
-        async function fetchQuote() {
-            try {
-                const response = await fetch(corsProxy + encodeURIComponent('https://v1.hitokoto.cn/?c=i&c=d&c=k'), { headers: { 'Accept': 'application/json' }});
-                const data = await response.json();
-                document.getElementById('quote-text').innerText = `「${data.hitokoto}」`;
-                document.getElementById('quote-author').innerText = `- ${data.from_who || data.from || "佚名"}`;
-            } catch (e) {
-                console.error("Quote API Error: ", e);
+            if (highestPriorityCode) {
+                const warningName = warnData[highestPriorityCode].name || highestPriorityCode;
+                wBadge.innerText = `⚠️ ${warningName}`;
+                normalWeatherHeader.style.display = 'none';
+                wContainer.style.display = 'block';
+
+                if (warningName.length > 16) wBadge.classList.add('marquee');
+                else wBadge.classList.remove('marquee');
+            } else {
+                normalWeatherHeader.style.display = 'flex';
+                wContainer.style.display = 'none';
             }
-        }
 
-        fetchWeather(); fetchKMB(); fetchQuote(); 
-        setInterval(fetchWeather, 300000); setInterval(fetchKMB, 30000); setInterval(fetchQuote, 3600000);
-    </script>
+            const fData = await fetchJsonWithFallback('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en');
+            const today = fData.weatherForecast[0];
+            document.getElementById('w-main-minmax').innerText = `${today.forecastMintemp.value}° / ${today.forecastMaxtemp.value}°`;
+            document.getElementById('w-main-desc').innerText = today.forecastWeather.split('.')[0];
+
+            const currentHour = new Date().getHours();
+            const isNightNow = currentHour >= 19 || currentHour < 6;
+            document.getElementById('w-main-icon').innerHTML = getHkoEmojiAnim(wData.icon[0], isNightNow);
+
+            const strip = document.getElementById('forecast-strip');
+            strip.innerHTML = '';
+            for (let i = 0; i < 7; i++) {
+                const day = fData.weatherForecast[i];
+                const dateStr = day.forecastDate;
+                const fDate = `${parseInt(dateStr.substring(6, 8))}/${parseInt(dateStr.substring(4, 6))}`;
+                strip.innerHTML += `<div class="day-card">
+                    <div class="d-name">
+                        <span class="d-weekday">${day.week.substring(0,3)}</span>
+                        <span class="d-date">${fDate}</span>
+                    </div>
+                    <div class="d-icon">${getHkoEmojiAnim(day.ForecastIcon, false)}</div>
+                    <div class="d-temp">${day.forecastMintemp.value}° - ${day.forecastMaxtemp.value}°</div>
+                </div>`;
+            }
+
+            const hourlyCont = document.getElementById('hourly-container');
+            hourlyCont.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                let displayHour = (currentHour + i * 2) % 24;
+                let ampm = displayHour >= 12 ? 'PM' : 'AM';
+                let h12 = displayHour % 12 || 12;
+                let isHourNight = displayHour >= 19 || displayHour < 6;
+                hourlyCont.innerHTML += `<div class="hour-card">
+                    <div class="h-time">${i === 5 ? 'TMRW' : h12 + ' ' + ampm}</div>
+                    <div class="h-icon">${getHkoEmojiAnim(wData.icon[0], isHourNight)}</div>
+                    <div class="h-temp">${ktTemp.value + (displayHour > 8 && displayHour < 16 ? 1 : -1)}°</div>
+                </div>`;
+            }
+        } catch (e) {
+            console.error('Weather error:', e);
+            document.getElementById('w-main-desc').innerText = 'Weather unavailable';
+        }
+    }
+
+    async function fetchKMB() {
+        try {
+            const result = await fetchJsonWithFallback('https://data.etabus.gov.hk/v1/transport/kmb/eta/215D99B3E2A5F8DD/215X/1');
+            const container = document.getElementById('kmb-data');
+            container.innerHTML = '';
+
+            if (result.data) {
+                let validBuses = result.data
+                    .filter(b => b.eta && b.dir === 'O')
+                    .sort((a, b) => new Date(a.eta) - new Date(b.eta));
+
+                let count = 0;
+                let seen = new Set();
+
+                for (let bus of validBuses) {
+                    if (count >= 2) break;
+                    let diff = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
+                    if (seen.has(diff)) continue;
+                    seen.add(diff);
+
+                    let cls = count === 0 ? 'next' : '';
+                    if (diff <= 2) cls += ' urgent';
+
+                    container.innerHTML += `<div class="bus-item ${cls}">
+                        <span class="bus-time">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span>
+                        <span class="bus-min">${diff <= 2 ? 'Arr' : diff + 'm'}</span>
+                    </div>`;
+                    count++;
+                }
+            }
+        } catch (e) {
+            console.error('KMB error:', e);
+            document.getElementById('kmb-data').innerHTML = `<div class="bus-item"><span class="bus-time">Bus unavailable</span></div>`;
+        }
+    }
+
+    async function fetchQuote() {
+        try {
+            const data = await fetchJsonWithFallback('https://v1.hitokoto.cn/?c=i&c=d&c=k');
+            document.getElementById('quote-text').innerText = `「${data.hitokoto}」`;
+            document.getElementById('quote-author').innerText = `- ${data.from_who || data.from || "佚名"}`;
+        } catch (e) {
+            console.error('Quote error:', e);
+            document.getElementById('quote-text').innerText = '暫時無法載入';
+            document.getElementById('quote-author').innerText = '-';
+        }
+    }
+
+    fetchWeather();
+    fetchKMB();
+    fetchQuote();
+
+    setInterval(fetchWeather, 300000);
+    setInterval(fetchKMB, 30000);
+    setInterval(fetchQuote, 3600000);
+</script>
     
 </body>
 </html>
