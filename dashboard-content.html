@@ -158,12 +158,11 @@
 
         const warningPriority = ['WTCSGNL', 'WRAIN', 'WFNTSA', 'WL', 'WTS', 'WHOT', 'WCOLD', 'WMSGNL', 'WFIRE', 'WFROST'];
 
-        // Added CORS proxy
-        const corsProxy = 'https://corsproxy.io/?';
+        // Updated to a more reliable proxy
+        const corsProxy = 'https://api.codetabs.com/v1/proxy/?quest=';
 
         async function fetchWeather() {
             try {
-                // Route HKO APIs through CORS proxy
                 const resCurrent = await fetch(corsProxy + encodeURIComponent('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en'));
                 const wData = await resCurrent.json();
                 const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
@@ -234,7 +233,6 @@
 
         async function fetchKMB() {
             try {
-                // Route KMB API through CORS proxy
                 const response = await fetch(corsProxy + encodeURIComponent(`https://data.etabus.gov.hk/v1/transport/kmb/eta/215D99B3E2A5F8DD/215X/1`));
                 const result = await response.json();
                 const container = document.getElementById('kmb-data'); container.innerHTML = '';
@@ -257,7 +255,6 @@
 
         async function fetchQuote() {
             try {
-                // Route Hitokoto API through CORS proxy
                 const response = await fetch(corsProxy + encodeURIComponent('https://v1.hitokoto.cn/?c=i&c=d&c=k'), { headers: { 'Accept': 'application/json' }});
                 const data = await response.json();
                 document.getElementById('quote-text').innerText = `「${data.hitokoto}」`;
