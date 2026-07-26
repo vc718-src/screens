@@ -39,10 +39,10 @@
         #live-time { font-size: 40px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
         #live-date { font-size: 20px; color: var(--text-sub); font-weight: 500; }
         
-        .status-group { display: flex; align-items: center; gap: 18px; font-size: 22px; font-weight: 600; justify-content: flex-end; }
+        .status-group { display: flex; align-items: center; gap: 18px; font-size: 22px; font-weight: 600; justify-content: flex-end; min-width: 0; }
         
         /* WARNING BADGE UPDATES */
-        .warning-container { display: none; background: rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 6px 15px; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .warning-container { display: none; background: rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 6px 15px; border: 1px solid rgba(239, 68, 68, 0.4); max-width: 100%; overflow: hidden; min-width: 0; }
         .warning-badge { display: inline-block; color: var(--alert-red); font-size: 22px; font-weight: 700; white-space: nowrap;}
         
         /* HIDE TEMP WHEN WARNING IS ACTIVE */
