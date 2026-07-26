@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dynamic Smart Dashboard</title>
     <style>
-        /* --- CALM DARK THEME --- */
         :root {
             --bg1: #0b1220; --bg2: #111827;
             --panel: #1e293b; --panel-border: rgba(255, 255, 255, 0.08);
@@ -28,35 +27,34 @@
             overflow: hidden; transition: all 1s ease;
         }
 
-        /* --- IPAD 4:3 GRID --- */
         .app { height: 100vh; padding: 15px; box-sizing: border-box; display: grid; grid-template-rows: 65px 1fr 130px; gap: 15px; }
         .main-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 15px; min-height: 0; }
         .side-column { display: grid; grid-template-rows: auto 1fr; gap: 15px; }
-
-        /* --- PANELS --- */
         .panel { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 18px; padding: 20px 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: center; }
         
-        /* --- ENHANCED HEADER WITH MARQUEE --- */
-        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0 25px; flex-wrap: nowrap; overflow: hidden; }
-        .time-group { display: flex; align-items: baseline; gap: 15px; flex-shrink: 0; }
+        /* NEW STRICT GRID HEADER */
+        .topbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; padding: 0 25px; white-space: nowrap; overflow: hidden; }
+        
+        .time-group { display: flex; align-items: baseline; gap: 15px; }
         #live-time { font-size: 40px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
         #live-date { font-size: 20px; color: var(--text-sub); font-weight: 500; }
         
-        .status-group { display: flex; align-items: center; gap: 18px; font-size: 22px; font-weight: 600; overflow: hidden; }
-        .warning-container { display: none; max-width: 250px; overflow: hidden; white-space: nowrap; background: rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 6px 12px; }
+        .status-group { display: flex; align-items: center; gap: 18px; font-size: 22px; font-weight: 600; justify-content: flex-end; }
         
-        /* Auto-scrolling text for long warnings */
-        .warning-badge { display: inline-block; color: var(--alert-red); font-size: 18px; }
-        .marquee { animation: scroll 8s linear infinite; }
+        /* WARNING BADGE UPDATES */
+        .warning-container { display: none; background: rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 6px 15px; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .warning-badge { display: inline-block; color: var(--alert-red); font-size: 22px; font-weight: 700; white-space: nowrap;}
+        
+        /* HIDE TEMP WHEN WARNING IS ACTIVE */
+        .hide-on-alert { display: flex; align-items: center; gap: 18px; }
+
+        .marquee { animation: scroll 12s linear infinite; }
         @keyframes scroll { 0% { transform: translateX(10%); } 100% { transform: translateX(-100%); } }
 
-        /* --- WEATHER PANEL --- */
         .weather-panel { justify-content: space-between; padding: 35px; }
         .weather-now { display: flex; align-items: center; gap: 30px; flex: 1; }
-        
         .w-icon-big { font-size: 120px; font-family: "Apple Color Emoji", sans-serif; line-height: 1; }
         .w-current-temp { font-size: 90px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
-        
         .w-details { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
         .w-desc { font-size: 28px; font-weight: 600; color: var(--accent-cyan); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
         .w-minmax { font-size: 20px; color: var(--text-sub); }
@@ -67,16 +65,13 @@
         .h-icon { font-size: 40px; font-family: "Apple Color Emoji", sans-serif; margin: 5px 0; }
         .h-temp { font-size: 24px; font-weight: 700; }
 
-        /* --- WEATHER CSS ANIMATIONS --- */
         .anim-sun { display: inline-block; animation: spin 15s linear infinite; }
         .anim-cloud { display: inline-block; animation: float 4s ease-in-out infinite; }
         .anim-rain { display: inline-block; animation: shake 2s ease-in-out infinite; }
-        
         @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 
-        /* --- UTILITY PANELS --- */
         .panel-title { display: flex; justify-content: space-between; align-items: center; font-size: 18px; text-transform: uppercase; color: var(--text-sub); font-weight: 700; margin-bottom: 15px; }
         .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.2); border-radius: 12px; border-left: 4px solid var(--text-sub); margin-bottom: 12px;}
         .bus-item.next { border-left-color: var(--accent-cyan); background: rgba(56, 189, 248, 0.05); }
@@ -88,7 +83,6 @@
         #quote-text { font-size: 28px; line-height: 1.6; font-weight: 500; font-family: "Microsoft JhengHei", sans-serif; letter-spacing: 2px; }
         #quote-author { font-size: 18px; color: var(--text-sub); margin-top: 15px; }
 
-        /* --- 7-DAY STRIP --- */
         .forecast-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; }
         .day-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
         .d-name { display: flex; flex-direction: row; align-items: baseline; gap: 8px; }
@@ -99,25 +93,24 @@
     </style>
 </head>
 <body>
-
     <div class="app">
-        <!-- HEADER -->
         <header class="panel topbar">
             <div class="time-group">
                 <div id="live-time">00:00</div>
                 <div id="live-date">Loading...</div>
             </div>
+            <div></div> <!-- Flexible spacer column -->
             <div class="status-group">
-                <!-- Scrolling Warning Container -->
                 <div class="warning-container" id="warning-container">
                     <div class="warning-badge" id="warning-badge">⚠️ Warning</div>
                 </div>
-                <div style="color: var(--accent-amber);" id="header-temp">--°C</div>
-                <div style="color: var(--accent-cyan);" id="header-hum">--%</div>
+                <div class="hide-on-alert" id="normal-weather-header">
+                    <div style="color: var(--accent-amber);" id="header-temp">--°C</div>
+                    <div style="color: var(--accent-cyan);" id="header-hum">--%</div>
+                </div>
             </div>
         </header>
 
-        <!-- MAIN GRID -->
         <main class="main-grid">
             <section class="panel weather-panel">
                 <div class="weather-now">
@@ -143,7 +136,6 @@
                 </section>
             </aside>
         </main>
-
         <footer class="panel forecast-strip" id="forecast-strip"></footer>
     </div>
 
@@ -155,7 +147,6 @@
         }
         setInterval(updateClock, 1000); updateClock();
 
-        // Assigns CSS animation classes to specific weather types
         function getHkoEmojiAnim(iconNum, isNight = false) {
             const num = parseInt(iconNum);
             if (num >= 50 && num <= 54) return isNight ? '<span class="anim-sun">🌙</span>' : '<span class="anim-sun">☀️</span>';
@@ -165,7 +156,6 @@
             return '<span class="anim-cloud">☁️</span>';
         }
 
-        // Warning Priority Logic (Ensures Typhoons/Rainstorms beat Fire/Thunderstorm warnings)
         const warningPriority = ['WTCSGNL', 'WRAIN', 'WFNTSA', 'WL', 'WTS', 'WHOT', 'WCOLD', 'WMSGNL', 'WFIRE', 'WFROST'];
 
         async function fetchWeather() {
@@ -178,27 +168,48 @@
                 document.getElementById('w-main-temp').innerText = `${ktTemp.value}°`;
                 document.getElementById('w-uv').innerText = `UV: ${wData.uvindex ? wData.uvindex.data[0].value : '--'}`;
 
-                // Priority Warning System
+                // FETCH AND PARSE WARNINGS
                 const resWarn = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en');
                 const warnData = await resWarn.json();
                 const wContainer = document.getElementById('warning-container');
                 const wBadge = document.getElementById('warning-badge');
+                const normalWeatherHeader = document.getElementById('normal-weather-header');
                 
                 if (warnData && Object.keys(warnData).length > 0) {
-                    let highestPriorityCode = Object.keys(warnData)[0]; 
+                    let highestPriorityCode = null;
+                    
+                    // Iterate through priority list to find the most severe active warning
                     for (let code of warningPriority) {
-                        if (warnData[code]) { highestPriorityCode = code; break; }
+                        if (warnData[code]) { 
+                            highestPriorityCode = code; 
+                            break; 
+                        }
                     }
                     
-                    const warningName = warnData[highestPriorityCode].name;
-                    wBadge.innerText = `⚠️ ${warningName}`;
-                    wContainer.style.display = 'block';
-                    
-                    if (warningName.length > 15) { wBadge.classList.add('marquee'); } 
-                    else { wBadge.classList.remove('marquee'); }
-                } else { wContainer.style.display = 'none'; }
+                    if (highestPriorityCode) {
+                        // Correctly extract the warning name based on the HKO API structure
+                        const warningName = warnData[highestPriorityCode].name;
+                        wBadge.innerText = `⚠️ ${warningName}`;
+                        
+                        // Hide standard header data to give the alert maximum space
+                        normalWeatherHeader.style.display = 'none';
+                        wContainer.style.display = 'block';
+                        
+                        if (warningName.length > 20) { 
+                            wBadge.classList.add('marquee'); 
+                        } else { 
+                            wBadge.classList.remove('marquee'); 
+                        }
+                    } else {
+                        // Fallback if structure is unexpected
+                        normalWeatherHeader.style.display = 'flex';
+                        wContainer.style.display = 'none';
+                    }
+                } else { 
+                    normalWeatherHeader.style.display = 'flex';
+                    wContainer.style.display = 'none'; 
+                }
 
-                // 9-Day Forecast
                 const resForecast = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en');
                 const fData = await resForecast.json();
                 const today = fData.weatherForecast[0];
@@ -209,7 +220,6 @@
                 const isNightNow = currentHour >= 19 || currentHour < 6;
                 document.getElementById('w-main-icon').innerHTML = getHkoEmojiAnim(wData.icon[0], isNightNow);
 
-                // Strip
                 const strip = document.getElementById('forecast-strip'); strip.innerHTML = '';
                 for (let i = 0; i < 7; i++) {
                     const day = fData.weatherForecast[i];
@@ -218,7 +228,6 @@
                     strip.innerHTML += `<div class="day-card"><div class="d-name"><span class="d-weekday">${day.week.substring(0,3)}</span><span class="d-date">${fDate}</span></div><div class="d-icon">${getHkoEmojiAnim(day.ForecastIcon, false)}</div><div class="d-temp">${day.forecastMintemp.value}° - ${day.forecastMaxtemp.value}°</div></div>`;
                 }
 
-                // Hourly
                 const hourlyCont = document.getElementById('hourly-container'); hourlyCont.innerHTML = '';
                 for (let i = 1; i <= 5; i++) {
                     let displayHour = (currentHour + (i * 2)) % 24; 
@@ -227,40 +236,4 @@
                     let isHourNight = displayHour >= 19 || displayHour < 6;
                     hourlyCont.innerHTML += `<div class="hour-card"><div class="h-time">${i===5?'TMRW':h12+' '+ampm}</div><div class="h-icon">${getHkoEmojiAnim(wData.icon[0], isHourNight)}</div><div class="h-temp">${ktTemp.value + (displayHour > 8 && displayHour < 16 ? 1 : -1)}°</div></div>`;
                 }
-            } catch (e) {}
-        }
-
-        async function fetchKMB() {
-            try {
-                const response = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/215D99B3E2A5F8DD/215X/1`);
-                const result = await response.json();
-                const container = document.getElementById('kmb-data'); container.innerHTML = '';
-                if (result.data) {
-                    let validBuses = result.data.filter(b => b.eta && b.dir === 'O').sort((a, b) => new Date(a.eta) - new Date(b.eta));
-                    let count = 0; let seen = new Set();
-                    for (let bus of validBuses) {
-                        if (count >= 2) break; 
-                        let diff = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
-                        if (seen.has(diff)) continue; seen.add(diff);
-                        let cls = count === 0 ? 'next' : ''; if (diff <= 2) cls += ' urgent';
-                        container.innerHTML += `<div class="bus-item ${cls}"><span class="bus-time">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span><span class="bus-min">${diff <= 2 ? 'Arr' : diff+'m'}</span></div>`;
-                        count++;
-                    }
-                }
-            } catch (e) {}
-        }
-
-        async function fetchQuote() {
-            try {
-                const response = await fetch('https://v1.hitokoto.cn/?c=i&c=d&c=k', { headers: { 'Accept': 'application/json' }});
-                const data = await response.json();
-                document.getElementById('quote-text').innerText = `「${data.hitokoto}」`;
-                document.getElementById('quote-author').innerText = `- ${data.from_who || data.from || "佚名"}`;
-            } catch (e) {}
-        }
-
-        fetchWeather(); fetchKMB(); fetchQuote(); 
-        setInterval(fetchWeather, 300000); setInterval(fetchKMB, 30000); setInterval(fetchQuote, 3600000);
-    </script>
-</body>
-</html>
+            } catch 
