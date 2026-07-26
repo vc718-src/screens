@@ -158,9 +158,13 @@
 
         const warningPriority = ['WTCSGNL', 'WRAIN', 'WFNTSA', 'WL', 'WTS', 'WHOT', 'WCOLD', 'WMSGNL', 'WFIRE', 'WFROST'];
 
+        // Added CORS proxy
+        const corsProxy = 'https://corsproxy.io/?';
+
         async function fetchWeather() {
             try {
-                const resCurrent = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en');
+                // Route HKO APIs through CORS proxy
+                const resCurrent = await fetch(corsProxy + encodeURIComponent('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en'));
                 const wData = await resCurrent.json();
                 const ktTemp = wData.temperature.data.find(t => t.place === "Kwun Tong") || wData.temperature.data[0];
                 document.getElementById('header-temp').innerText = `${ktTemp.value}°C`;
@@ -168,8 +172,7 @@
                 document.getElementById('w-main-temp').innerText = `${ktTemp.value}°`;
                 document.getElementById('w-uv').innerText = `UV: ${wData.uvindex ? wData.uvindex.data[0].value : '--'}`;
 
-                // FETCH AND PARSE WARNINGS
-                const resWarn = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en');
+                const resWarn = await fetch(corsProxy + encodeURIComponent('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=en'));
                 const warnData = await resWarn.json();
                 const wContainer = document.getElementById('warning-container');
                 const wBadge = document.getElementById('warning-badge');
@@ -178,30 +181,18 @@
                 if (warnData && Object.keys(warnData).length > 0) {
                     let highestPriorityCode = null;
                     
-                    // Iterate through priority list to find the most severe active warning
                     for (let code of warningPriority) {
-                        if (warnData[code]) { 
-                            highestPriorityCode = code; 
-                            break; 
-                        }
+                        if (warnData[code]) { highestPriorityCode = code; break; }
                     }
                     
                     if (highestPriorityCode) {
-                        // Correctly extract the warning name based on the HKO API structure
                         const warningName = warnData[highestPriorityCode].name;
                         wBadge.innerText = `⚠️ ${warningName}`;
-                        
-                        // Hide standard header data to give the alert maximum space
                         normalWeatherHeader.style.display = 'none';
                         wContainer.style.display = 'block';
-                        
-                        if (warningName.length > 20) { 
-                            wBadge.classList.add('marquee'); 
-                        } else { 
-                            wBadge.classList.remove('marquee'); 
-                        }
+                        if (warningName.length > 20) { wBadge.classList.add('marquee'); } 
+                        else { wBadge.classList.remove('marquee'); }
                     } else {
-                        // Fallback if structure is unexpected
                         normalWeatherHeader.style.display = 'flex';
                         wContainer.style.display = 'none';
                     }
@@ -210,7 +201,7 @@
                     wContainer.style.display = 'none'; 
                 }
 
-                const resForecast = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en');
+                const resForecast = await fetch(corsProxy + encodeURIComponent('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en'));
                 const fData = await resForecast.json();
                 const today = fData.weatherForecast[0];
                 document.getElementById('w-main-minmax').innerText = `${today.forecastMintemp.value}° / ${today.forecastMaxtemp.value}°`;
@@ -236,4 +227,49 @@
                     let isHourNight = displayHour >= 19 || displayHour < 6;
                     hourlyCont.innerHTML += `<div class="hour-card"><div class="h-time">${i===5?'TMRW':h12+' '+ampm}</div><div class="h-icon">${getHkoEmojiAnim(wData.icon[0], isHourNight)}</div><div class="h-temp">${ktTemp.value + (displayHour > 8 && displayHour < 16 ? 1 : -1)}°</div></div>`;
                 }
-            } catch 
+            } catch (e) {
+                console.error("Weather API Error: ", e);
+            }
+        }
+
+        async function fetchKMB() {
+            try {
+                // Route KMB API through CORS proxy
+                const response = await fetch(corsProxy + encodeURIComponent(`https://data.etabus.gov.hk/v1/transport/kmb/eta/215D99B3E2A5F8DD/215X/1`));
+                const result = await response.json();
+                const container = document.getElementById('kmb-data'); container.innerHTML = '';
+                if (result.data) {
+                    let validBuses = result.data.filter(b => b.eta && b.dir === 'O').sort((a, b) => new Date(a.eta) - new Date(b.eta));
+                    let count = 0; let seen = new Set();
+                    for (let bus of validBuses) {
+                        if (count >= 2) break; 
+                        let diff = Math.max(0, Math.round((new Date(bus.eta) - new Date()) / 60000));
+                        if (seen.has(diff)) continue; seen.add(diff);
+                        let cls = count === 0 ? 'next' : ''; if (diff <= 2) cls += ' urgent';
+                        container.innerHTML += `<div class="bus-item ${cls}"><span class="bus-time">${new Date(bus.eta).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</span><span class="bus-min">${diff <= 2 ? 'Arr' : diff+'m'}</span></div>`;
+                        count++;
+                    }
+                }
+            } catch (e) {
+                console.error("KMB API Error: ", e);
+            }
+        }
+
+        async function fetchQuote() {
+            try {
+                // Route Hitokoto API through CORS proxy
+                const response = await fetch(corsProxy + encodeURIComponent('https://v1.hitokoto.cn/?c=i&c=d&c=k'), { headers: { 'Accept': 'application/json' }});
+                const data = await response.json();
+                document.getElementById('quote-text').innerText = `「${data.hitokoto}」`;
+                document.getElementById('quote-author').innerText = `- ${data.from_who || data.from || "佚名"}`;
+            } catch (e) {
+                console.error("Quote API Error: ", e);
+            }
+        }
+
+        fetchWeather(); fetchKMB(); fetchQuote(); 
+        setInterval(fetchWeather, 300000); setInterval(fetchKMB, 30000); setInterval(fetchQuote, 3600000);
+    </script>
+    
+</body>
+</html>
